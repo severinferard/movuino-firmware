@@ -96,7 +96,11 @@ All the `/xxxx/get` messages are responses to the corresponding input messages.
 ## AP mode
 
 The firmware also allows to boot in Access Point mode, providing access to a configuration page where all the settings can be modified and stored to the local configuration file.
+
+<div style="text-align: center;">
 ![Movuino AP interface](https://raw.githubusercontent.com/josephlarralde/movuino-firmware/master/movuino-ap-interface.jpg)
+</div>
+
 To boot in AP mode, turn the movuino on while holding the button, and wait until the blue LED starts blinking quickly to release it.
 The movuino will create a network named `movuino-xxxxxxxxxx`. Connect to this network, then visit the url `http://192.168.1.1` and you should see the configuration page appear, which will let you modify and store all the settings available via OSC.
 
