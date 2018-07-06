@@ -70,6 +70,7 @@ Acknowledgement messages apart, the output namespace is :
 * `/frame  <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)> <buttonState(int)> <vibratorState(bool)>`
 
 All the `/xxxx/get` messages are responses to the corresponding input messages.
+
 When the `sendSingleFrame` option is enabled, sensor values and the button state are sent together within the `/frame` message.
 When `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message, and the button state is sent via the `/button` message on value change only.
 The `/sensors` and `/frame` messages are always sent at a frequency of 1000 * `outputFramePeriod` Hz.
