@@ -49,7 +49,7 @@ OSC routes are defined in the file `globals.h`, and the routing mostly happens i
 * `/ports/get`
 * `/range/set <accelRange(int)> <gyroRange(int)>`
 * `/range/get`
-* `/config/set <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldTimeout(int)>`
+* `/config/set <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldDuration(int)>`
 * `/config/get`
 * `/vibroPulse <onDuration(int)> <offDuration(int)> <times(int)>`
 * `/vibroNow <onOff(bool)>`
@@ -64,12 +64,15 @@ Acknowledgement messages apart, the output namespace is :
 * `/wifi/get <ssid(string)> <password(string)> <hostIP(string)>`
 * `/ports/get <inputUDPPort(int)> <outputUDPPort(int)>`
 * `/range/get <accelRange(int)> <gyroRange(int)>`
-* `/config/get <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldTimeout(int)>`
+* `/config/get <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldDuration(int)>`
 * `/sensors <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)>`
 * `/button <buttonState(int)>`
 * `/frame  <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)> <buttonState(int)> <vibratorState(bool)>`
 
 All the `/xxxx/get` messages are responses to the corresponding input messages.
+When the `sendSingleFrame` option is enabled, sensor values and the button state are sent together within the `/frame` message.
+When `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message, and the button state is sent via the `/button` message on value change only.
+The `/sensors` and `/frame` messages are always sent at a frequency of 1000 * `outputFramePeriod` Hz.
 
 #### notes
 
@@ -82,15 +85,20 @@ All the `/xxxx/get` messages are responses to the corresponding input messages.
     * `2` (+/- 8g)
     * `3` (+/- 16g)
 * `gyroRange` can take the following values
-    * `0` (+/- 250 deg/s)
-    * `1` (+/- 500 deg/s)
-    * `2` (+/- 1000 deg/s)
-    * `3` (+/- 2000 deg/s)
+    * `0` (+/- 250 deg/sec)
+    * `1` (+/- 500 deg/sec)
+    * `2` (+/- 1000 deg/sec)
+    * `3` (+/- 2000 deg/sec)
 * All the parameters named `xxxPeriod` and `xxxDuration` are expressed in milliseconds.
 * If the specified `times` parameter in the `/vibroPulse` message equals `-1`, the pulse will go on forever until a new message with another value is received
-* `/wifi/state` is the only message not sent via WiFi, as it gives the WiFi connection state in real-time (0 is disconnected, 1 is connected, and 2 is connecting).
-* When the `sendSingleFrame` option is enabled, sensor values and the button state are sent altogether via the `/frame` message, at 1000 * `outputFramePeriod` Hz.
-* If `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message at 1000 * `outputFramePeriod` Hz, and the button state is sent via the `/button` message on value change only.
+* `/wifi/state` is the only message not sent via WiFi, as it gives the WiFi connection state in real-time. It can take the following values
+    * `0` (disconnected)
+    * `1` (connected)
+    * `2` (connecting)
+* `buttonState` can take the following values
+    * `0` (released)
+    * `1` (pressed)
+    * `2` (pressing for longer than `buttonHoldDuration` ms)
 * For the time being webSocket transmission of OSC messages is not implemented, so if there is a lot of traffic on the network, it is advised to enable `sendSingleFrame` to avoid losing button state messages, and to configure the board through serial connection for the same reason.
 
 ## AP mode
