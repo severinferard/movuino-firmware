@@ -55,13 +55,6 @@ OSC routes are defined in the file `globals.h`, and the routing mostly happens i
 * `/vibroNow <onOff(bool)>`
 
 Movuino responds to `/wifi/enable` and all the `/xxxx/set` messages by forwarding them back with their original values to the sender as an acknowledgement.
-Except `/vibroPulse` and `/vibroNow`, all the input messages are directly taken into account and stored to a configuration file which will be loaded on reboot.
-Parameters of type `bool` use int values (`0` for `false` and `1` for `true`).
-`hostIP` must have the form `a.b.c.d`, where `a`, `b`, `c` and `d` are integer values within the [0;255] range.
-`accelRange` can take the values `0` (+/- 2g), `1` (+/- 4g), `2` (+/- 8g) or `3` (+/- 16g).
-`gyroRange` can take the values `0` (+/- 250 deg/s), `1` (+/- 500 deg/s), `2` (+/- 1000 deg/s) or `3` (+/- 2000 deg/s).
-All the parameters named `xxxPeriod` and `xxxDuration` are expressed in milliseconds.
-If the specified `times` parameter in the `/vibroPulse` message equals `-1`, the pulse will go on forever until a new message with another value is received
 
 #### output
 
@@ -76,12 +69,29 @@ Acknowledgement messages apart, the output namespace is :
 * `/button <buttonState(int)>`
 * `/frame  <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)> <buttonState(int)> <vibratorState(bool)>`
 
-`/wifi/state` is the only message not sent via WiFi, as it gives the WiFi connection state in real-time (0 is disconnected, 1 is connected, and 2 is connecting).
 All the `/xxxx/get` messages are responses to the corresponding input messages.
-When the `sendSingleFrame` option is enabled, sensors values and the button state are sent altogether in the `/frame` message, at 1000 * `outputFramePeriod` Hz.
-If `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message at 1000 * `outputFramePeriod` Hz, and the button state is sent via the `/button` message on value change only.
 
-For the time being webSocket transmission of OSC messages is not implemented, so if the network has a lot traffic, it is advised to enable `sendSingleFrame` to avoid losing button state messages, and to configure the board through serial connection for the same reason.
+#### notes
+
+* Except `/vibroPulse` and `/vibroNow`, all the input messages are directly taken into account and stored to a configuration file which will be loaded on reboot.
+* Parameters of type `bool` use int values (`0` for `false` and `1` for `true`).
+* `hostIP` has the form `a.b.c.d`, where `a`, `b`, `c` and `d` are integer values within the [0;255] range.
+* `accelRange` can take the following values
+    * `0` (+/- 2g)
+    * `1` (+/- 4g)
+    * `2` (+/- 8g)
+    * `3` (+/- 16g)
+* `gyroRange` can take the following values
+    * `0` (+/- 250 deg/s)
+    * `1` (+/- 500 deg/s)
+    * `2` (+/- 1000 deg/s)
+    * `3` (+/- 2000 deg/s)
+* All the parameters named `xxxPeriod` and `xxxDuration` are expressed in milliseconds.
+* If the specified `times` parameter in the `/vibroPulse` message equals `-1`, the pulse will go on forever until a new message with another value is received
+* `/wifi/state` is the only message not sent via WiFi, as it gives the WiFi connection state in real-time (0 is disconnected, 1 is connected, and 2 is connecting).
+* When the `sendSingleFrame` option is enabled, sensors values and the button state are sent altogether in the `/frame` message, at 1000 * `outputFramePeriod` Hz.
+* If `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message at 1000 * `outputFramePeriod` Hz, and the button state is sent via the `/button` message on value change only.
+* For the time being webSocket transmission of OSC messages is not implemented, so if the network has a lot traffic, it is advised to enable `sendSingleFrame` to avoid losing button state messages, and to configure the board through serial connection for the same reason.
 
 ## AP mode
 
