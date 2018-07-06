@@ -27,7 +27,6 @@ public:
   static void encodeAndSendSettings(uint8_t num, bool broadcast = false);
   static void parseInputMessage(uint8_t *payload, size_t length);
   static void processInputMessage();
-  // static void decodeAndStoreSettings(uint8_t *payload, size_t length);
 };
 
 #endif /* _MOVUINO_FIRMWARE_ACCESS_POINT_H_ */

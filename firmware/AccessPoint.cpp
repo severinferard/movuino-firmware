@@ -57,6 +57,7 @@ AccessPoint::init(Config *c) {
   // Don't use WIFI_AP_STA mode !!!!!
   // (or be warned it also tries to connect to the last network the ESP
   // remembers and prevents websockets to work if it fails)
+  // see : https://github.com/Links2004/arduinoWebSockets/issues/274
 
   WiFi.mode(WIFI_AP);
   IPAddress ip(192,168,1,1);
@@ -209,7 +210,7 @@ AccessPoint::processInputMessage() {
     if (msg[0] == "clear") {
       config->reset();
       config->store();
-      encodeAndSendSettings(0, true);
+      encodeAndSendSettings(0, true); // refresh page
     } else if (msg[0] == "settings" && msgLength >= 14) {
       config->setSsid(msg[1].c_str());
       config->setPassword(msg[2].c_str());
@@ -230,86 +231,3 @@ AccessPoint::processInputMessage() {
     }
   }
 }
-
-/*
-void
-AccessPoint::decodeAndStoreSettings(uint8_t *payload, size_t length) {
-  size_t index = 0;
-  size_t charCnt = 0;
-  size_t wordCnt = 0;
-
-  APCommand command = APUnknown;
-  char element[length];
-
-  while (index < length) {
-    if (payload[index] != '\n') {
-      element[charCnt++] = (char) payload[index];
-    } else {
-      element[charCnt] = '\0';
-      if (wordCnt == 0) {
-        if (strcmp((const char *)element, "clear") == 0) {
-          bool light = false;
-          for (int i = 0; i < 10; i++) {
-            light = !light;
-            digitalWrite(pinLedWifi, light ? LOW : HIGH);
-            delay(50);
-          }
-
-          command = APClear;
-          config->reset();
-          config->store();
-          //return;
-
-        } else if (strcmp((const char *)element, "settings") == 0) {
-          command = APSettings;
-        } else {
-          //return;
-        }
-      } else if (command == APSettings) {
-        if (wordCnt == 1) {
-          config->setSsid(element);
-        } else if (wordCnt == 2) {
-          config->setPassword(element);
-        } else if (wordCnt == 3) {
-          config->setHostIP(element);
-        } else if (wordCnt == 4) {
-          config->setInputPort(String(element).toInt());
-        } else if (wordCnt == 5) {
-          config->setOutputPort(String(element).toInt());
-        } else if (wordCnt == 6) {
-          config->setAccelRange(String(element).toInt());
-        } else if (wordCnt == 7) {
-          config->setGyroRange(String(element).toInt());
-        } else if (wordCnt == 8) {
-          config->setUseWiFi(String(element).toInt() > 0);
-        } else if (wordCnt == 9) {
-          config->setUseSerial(String(element).toInt() > 0);
-        } else if (wordCnt == 10) {
-          config->setSendSingleFrame(String(element).toInt() > 0);
-        } else if (wordCnt == 11) {
-          config->setReadMagPeriod(String(element).toInt());
-        } else if (wordCnt == 12) {
-          config->setOutputFramePeriod(String(element).toInt());
-        } else if (wordCnt == 13) {
-          config->setButtonHoldDuration(String(element).toInt());
-
-          bool light = false;
-          for (int i = 0; i < 10; i++) {
-            light = !light;
-            digitalWrite(pinLedWifi, light ? LOW : HIGH);
-            delay(50);
-          }
-
-          config->store();
-          //return;
-        }
-      }
-
-      charCnt = 0;
-      wordCnt++;
-    }
-
-    index++;
-  }
-}
-//*/
