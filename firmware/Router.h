@@ -44,9 +44,10 @@ private:
   void routeOSCMessage(OSCMessage& msg);
 
   void sendWiFiConnectionMessage(int i);
-  void sendWiFiSettings();
-  void sendAccelGyroRanges();
-  void sendGlobalConfig();
+  void sendWiFiSettings(oscAddress a);
+  void sendPorts(oscAddress a);
+  void sendAccelGyroRanges(oscAddress a);
+  void sendGlobalConfig(oscAddress a);
 
   void sendButtonMessage(int i);
   void sendSensorsMessage(float *f);

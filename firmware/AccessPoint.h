@@ -1,23 +1,33 @@
 #ifndef _MOVUINO_FIRMWARE_ACCESS_POINT_H_
 #define _MOVUINO_FIRMWARE_ACCESS_POINT_H_
 
-// TODO : put webserver code here
-
-// use in wifiinterface ? or alone ?
-// (we could stream data from accesspoint)
-
 class Config;
+class ESP8266WebServer;
+class WebSocketsServer;
 
 class AccessPoint {
 private:
-  Config *config;
+  bool initialized;
 
+  static int msgLength;
+  static String msg[MAX_TOTAL_CONFIG_LENGTH];
+  static Config *config;
+  
 public:
-  AccessPoint() {}
+  static ESP8266WebServer *webServer;
+  static WebSocketsServer *socketServer;
+
+  AccessPoint() : initialized(false) {}
+
   ~AccessPoint() {}
 
   void init(Config *c);
   void update();
+
+  static void encodeAndSendSettings(uint8_t num, bool broadcast = false);
+  static void parseInputMessage(uint8_t *payload, size_t length);
+  static void processInputMessage();
+  // static void decodeAndStoreSettings(uint8_t *payload, size_t length);
 };
 
 #endif /* _MOVUINO_FIRMWARE_ACCESS_POINT_H_ */

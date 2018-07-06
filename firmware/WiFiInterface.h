@@ -6,8 +6,14 @@
 
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
+
+// maybe someday we could allow to manage a list of networks via OSC messages
+// or from config page in AP mode. when it happens, use addAP method from :
 // #include <ESP8266WiFiMulti.h>
-#include <WebSocketsServer.h>
+
+// for TCP OSC :
+// #include <WebSocketsServer.h>
+
 #include <WiFiUdp.h>
 #include <OSCMessage.h>
 #include "Timer.h"
@@ -20,17 +26,10 @@ class Router;
 
 class WiFiInterface : public Timer {
 private:
-  WiFiBootMode wifiBootMode;
-
   // timer specific vars
   bool wifiLight;
   bool batLight;
   unsigned long connectionTimeout;
-
-  String wifi;
-  String disconnected;
-  String connecting;
-  String connected;
 
   bool initialized;
   WiFiUDP udp;
@@ -43,14 +42,9 @@ public:
   WiFiInterface(unsigned long blinkPeriod = LOW_BLINK_PERIOD,
                 unsigned long timeout = WIFI_CONNECTION_TIMEOUT) :
   Timer(blinkPeriod),
-  wifiBootMode(WiFiStation),
   wifiLight(false),
   batLight(false),
   connectionTimeout(timeout),
-  wifi("wifi"),
-  disconnected("disconnected"),
-  connecting("connecting"),
-  connected("connected"),
   initialized(false) {}
 
   virtual ~WiFiInterface() {}
@@ -59,7 +53,6 @@ public:
   void stop(); // called back by update when timeout is over
   void callback();
 
-  void setBootMode(WiFiBootMode m); // supposed to be called once at start time
   void init(Config *c, Router *r); // supposed to be called once at start time
   void update();
 

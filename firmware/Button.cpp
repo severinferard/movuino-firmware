@@ -21,17 +21,10 @@ Button::update() {
     router->onButtonEvent(state);
   } else if (!btn && btnOn) {
     btnOn = holding = false;
-
-    // if (now - lastBtnDate > config->getButtonHoldDuration()) {
-    //   // do whatever on buttonRelease after time threshold
-    // } else {
-    //   // do whatever on buttonRelease before time threshold
-    // }
     state = ButtonReleased;
     router->onButtonEvent(state);
   } else if (btnOn && holding &&
              now - lastBtnDate > config->getButtonHoldDuration()) {
-    // do whatever on buttonHold until time threshold
     holding = false;
     state = ButtonHolding;
     router->onButtonEvent(state);

@@ -7,6 +7,7 @@
 #include "Sensors.h"
 #include "SerialInterface.h"
 #include "WiFiInterface.h"
+#include "AccessPoint.h"
 
 #include "globals.h"
 
@@ -18,18 +19,31 @@ Vibrator vibrator;
 SerialInterface serial;
 WiFiInterface wifi;
 
+AccessPoint *ap;
+
+WiFiBootMode mode;
+
 void setup() {
   pinMode(pinBtn, INPUT_PULLUP); // pin for the button
-  pinMode(pinLedWifi, OUTPUT);   // pin for the wifi led
-  pinMode(pinLedBat, OUTPUT);    // pin for the battery led
-  pinMode(pinVibro, OUTPUT);     // pin for the vibrator
+  pinMode(pinLedWifi, OUTPUT); // pin for the wifi led
+  pinMode(pinLedBat, OUTPUT); // pin for the battery led
+  pinMode(pinVibro, OUTPUT); // pin for the vibrator
 
-  wifi.setBootMode(checkBootMode());
+  mode = checkBootMode();
 
-  Wire.begin();
-  router.init(&config, &button, &sensors, &vibrator, &serial, &wifi);
+  if (mode == WiFiStation) {
+    Wire.begin();
+    router.init(&config, &button, &sensors, &vibrator, &serial, &wifi);
+  } else {
+    ap = new AccessPoint();
+    ap->init(&config);
+  }
 }
 
 void loop() {
-  router.update();
+  if (mode == WiFiStation) {
+    router.update();
+  } else {
+    ap->update();
+  }
 }

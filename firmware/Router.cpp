@@ -114,10 +114,11 @@ Router::routeOSCMessage(OSCMessage& msg) {
   char address[MAX_OSC_ADDRESS_LENGTH];
   char arg[MAX_OSC_STRING_ARG_LENGTH];
 
+  int msgLength = msg.size();
   msg.getAddress(address);
 
   //----------------------------------------------------------------------------
-  if (strcmp(address, oscAddresses[oscInputWiFiEnable]) == 0) { // usually from serial
+  if (strcmp(address, oscAddresses[oscInputWiFiEnable]) == 0 && msgLength > 0) { // usually from serial
     config->setUseWiFi(msg.getInt(0) > 0);
     config->store();
 
@@ -130,29 +131,52 @@ Router::routeOSCMessage(OSCMessage& msg) {
       wifi->stopWiFi();
     }
   //----------------------------------------------------------------------------
-  } else if (strcmp(address, oscAddresses[oscInputSetWiFi]) == 0) {
-    // we get ssid, password, hostIP, portIn, portOut
+  } else if (strcmp(address, oscAddresses[oscInputSetWiFi]) == 0 && msgLength > 1) {
+    // we can have :
+    // <ssid> <hostIP> if no password
+    // <ssid> <password> <hostIP>
+
     msg.getString(0, (char *)arg, MAX_OSC_STRING_ARG_LENGTH);
     config->setSsid((const char *)arg);
-    msg.getString(1, (char *)arg, MAX_OSC_STRING_ARG_LENGTH);
-    config->setPassword((const char *)arg);
-    msg.getString(2, (char *)arg, MAX_OSC_STRING_ARG_LENGTH);
-    config->setHostIP((const char *)arg);
 
-    config->setInputPort(msg.getInt(3));
-    config->setOutputPort(msg.getInt(4));
+    if (msgLength == 2) { // no password
+      config->setPassword("");
+      msg.getString(1, (char *)arg, MAX_OSC_STRING_ARG_LENGTH);
+      config->setHostIP((const char *)arg);
+    } else { // msgLength >= 3, we have a password
+      msg.getString(1, (char *)arg, MAX_OSC_STRING_ARG_LENGTH);
+      config->setPassword((const char *)arg);
+      msg.getString(2, (char *)arg, MAX_OSC_STRING_ARG_LENGTH);
+      config->setHostIP((const char *)arg);
+    }
 
     config->store();
-
-    sendSerialMessage(msg);
-    sendWiFiMessage(msg);
-
+    sendWiFiSettings(oscOutputSetWiFi);
+    wifi->stopWiFi();
     wifi->startWiFi(); // will check if useWifi is set
   //----------------------------------------------------------------------------
   } else if (strcmp(address, oscAddresses[oscInputGetWiFi]) == 0) {
-    sendWiFiSettings(oscInputGetWiFi);
+    sendWiFiSettings(oscOutputGetWiFi);
   //----------------------------------------------------------------------------
-  } else if (strcmp(address, oscAddresses[oscInputSetRange]) == 0) {
+  } else if (strcmp(address, oscAddresses[oscInputSetPorts]) == 0 && msgLength > 1) {
+    int in = msg.getInt(0);
+    int out = msg.getInt(1);
+
+    in = in < 0 ? 0 : in;
+    out = out < 0 ? 0 : out;
+
+    config->setInputPort(in);
+    config->setOutputPort(out);
+
+    config->store();
+    sendPorts(oscOutputSetPorts);
+    wifi->stopWiFi();
+    wifi->startWiFi(); // will check if useWifi is set
+  //----------------------------------------------------------------------------
+  } else if (strcmp(address, oscAddresses[oscInputGetPorts]) == 0) {
+    sendPorts(oscOutputGetPorts);
+  //----------------------------------------------------------------------------
+  } else if (strcmp(address, oscAddresses[oscInputSetRange]) == 0 && msgLength > 1) {
     sensors->setAccelRange(msg.getInt(0));
     sensors->setGyroRange(msg.getInt(1));
 
@@ -160,15 +184,12 @@ Router::routeOSCMessage(OSCMessage& msg) {
     config->setGyroRange(msg.getInt(1));
 
     config->store();
-
-    // mirror
-    sendSerialMessage(msg);
-    sendWiFiMessage(msg);
+    sendAccelGyroRanges(oscOutputSetRange);
   //----------------------------------------------------------------------------
   } else if (strcmp(address, oscAddresses[oscInputGetRange]) == 0) {
-    sendAccelGyroRanges();
+    sendAccelGyroRanges(oscOutputGetRange);
   //----------------------------------------------------------------------------
-  } else if (strcmp(address, oscAddresses[oscInputSetConfig]) == 0) {
+  } else if (strcmp(address, oscAddresses[oscInputSetConfig]) == 0 && msgLength > 1) {
     sensors->setReadMagPeriod(msg.getInt(2));
     sensors->setOutputFramePeriod(msg.getInt(3));
 
@@ -179,12 +200,10 @@ Router::routeOSCMessage(OSCMessage& msg) {
     config->setButtonHoldDuration(msg.getInt(4));
 
     config->store();
-
-    sendSerialMessage(msg);
-    sendWiFiMessage(msg);
+    sendGlobalConfig(oscOutputSetConfig);
   //----------------------------------------------------------------------------
   } else if (strcmp(address, oscAddresses[oscInputGetConfig]) == 0) {
-    sendGlobalConfig();
+    sendGlobalConfig(oscOutputGetConfig);
   //----------------------------------------------------------------------------
   } else if (strcmp(address, oscAddresses[oscInputSetAll]) == 0) {
   // TODO
@@ -192,14 +211,14 @@ Router::routeOSCMessage(OSCMessage& msg) {
   } else if (strcmp(address, oscAddresses[oscInputGetAll]) == 0) {
   // TODO
   //----------------------------------------------------------------------------
-  } else if (strcmp(address, oscAddresses[oscInputVibroPulse]) == 0) {
+  } else if (strcmp(address, oscAddresses[oscInputVibroPulse]) == 0 && msgLength > 2) {
     vibrator->pulse(
       (unsigned long) msg.getInt(0),
       (unsigned long) msg.getInt(1),
       (unsigned long) msg.getInt(2)
     );
   //----------------------------------------------------------------------------
-  } else if (strcmp(address, oscAddresses[oscInputVibroNow]) == 0) {
+  } else if (strcmp(address, oscAddresses[oscInputVibroNow]) == 0 && msgLength > 0) {
     vibrator->vibrate(msg.getInt(0) != 0);
   //----------------------------------------------------------------------------
   }
@@ -219,24 +238,34 @@ Router::sendWiFiSettings(oscAddress a) {
   msg.add(config->getSsid());
   msg.add(config->getPassword());
   msg.add(config->getHostIP());
+
+  sendSerialMessage(msg);
+  sendWiFiMessage(msg);
+}
+
+void
+Router::sendPorts(oscAddress a) {
+  OSCMessage msg(oscAddresses[a]);
   msg.add(config->getInputPort());
   msg.add(config->getOutputPort());
 
   sendSerialMessage(msg);
+  sendWiFiMessage(msg);
 }
 
 void
-Router::sendAccelGyroRanges() {
-  OSCMessage msg(oscAddresses[oscOutputSetRange]);
+Router::sendAccelGyroRanges(oscAddress a) {
+  OSCMessage msg(oscAddresses[a]);
   msg.add(config->getAccelRange());
   msg.add(config->getGyroRange());
 
   sendSerialMessage(msg);
+  sendWiFiMessage(msg);
 }
 
 void
-Router::sendGlobalConfig() {
-  OSCMessage msg(oscAddresses[oscOutputSetConfig]);
+Router::sendGlobalConfig(oscAddress a) {
+  OSCMessage msg(oscAddresses[a]);
   msg.add(config->getUseSerial() ? "1" : "0");
   msg.add(config->getSendSingleFrame() ? "1" : "0");
   msg.add(config->getReadMagPeriod());
@@ -244,6 +273,7 @@ Router::sendGlobalConfig() {
   msg.add(config->getButtonHoldDuration());
 
   sendSerialMessage(msg);
+  sendWiFiMessage(msg);
 }
 
 void
@@ -287,7 +317,8 @@ Router::sendSingleFrame(float *f) {
 
   msg.add(getButtonIntValue(button->getState())); // append the button value
   msg.add(vibrator->isVibrating() ? 1 : 0);
-  msg.add(wifi->getStringIPAddress().c_str());
+  // sender ip already contained in every UDP packet, so no use for this :
+  // msg.add(wifi->getStringIPAddress().c_str());
 
   if (config->getUseSerial()) {
     sendSerialMessage(msg);

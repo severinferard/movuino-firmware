@@ -4,17 +4,11 @@
 
 
 void
-WiFiInterface::setBootMode(WiFiBootMode m) {
-  wifiBootMode = m;
-}
-
-void
 WiFiInterface::init(Config *c, Router *r) {
   config = c;
   router = r;
 
-  if (wifiBootMode == WiFiAccessPoint ||
-      (wifiBootMode == WiFiStation && config->getUseWiFi())) {
+  if (config->getUseWiFi()) {
     startWiFi();
   }
 }
@@ -58,7 +52,7 @@ WiFiInterface::stop() {
 //============================ WIFIINTERFACE =================================//
 
 void
-WiFiInterface::readMessages(/*Router *router*/) {
+WiFiInterface::readMessages() {
   OSCMessage msg;
   int packetSize = udp.parsePacket();
   if (packetSize > 0) {
@@ -96,39 +90,22 @@ WiFiInterface::isConnected() {
 
 void
 WiFiInterface::startWiFi() {
-  wifiLight = batLight = true;
+  if (WiFi.status() != WL_CONNECTED) {
+    wifiLight = batLight = false; // turn lights off is !useWiFi
 
-  if (wifiBootMode == WiFiAccessPoint) {
-    if (!initialized) {
-      char apssid[30];
-      strcpy(apssid, "movuino-");
-      strcat(apssid, config->getMovuinoId());
-
-      if (WiFi.softAP(apssid, "")) {
+    if (config->getUseWiFi()) {
+      if (!initialized) {
+        WiFi.mode(WIFI_STA);
         initialized = true;
-        // digitalWrite(pinLedWifi, LOW); // turn ON wifi led
       } else {
-        wifiLight = batLight = false;
-        // digitalWrite(pinLedWifi, HIGH); // turn OFF wifi led
+        WiFi.forceSleepWake();
       }
-    }
-  } else if (config->getUseWiFi()) { // wifiBootMode == WiFiStation
-    if (!initialized) {
-      WiFi.mode(WIFI_STA);
-      initialized = true;
-    } else {
-      WiFi.forceSleepWake();
-    }
 
-    WiFi.begin(config->getSsid(), config->getPassword());
-    // digitalWrite(pinLedBat, LOW); // turn ON battery led
-
-    // this used to be in startConnectionTimer :
-    start(connectionTimeout);
-    onConnectionEvent(WiFiConnecting);
-  } else {
-    // do nothing except switch off lights because useWiFi is false
-    wifiLight = batLight = false;
+      WiFi.begin(config->getSsid(), config->getPassword());
+      start(connectionTimeout); // inherited from Timer
+      onConnectionEvent(WiFiConnecting);
+      wifiLight = batLight = true; // start blinking;
+    }
   }
 }
 
@@ -136,8 +113,6 @@ WiFiInterface::startWiFi() {
 
 void
 WiFiInterface::stopWiFi() {
-  if (wifiBootMode == WiFiAccessPoint) return; // reboot instead of doing this
-
   if (running) {
     running = false;
   }
@@ -166,9 +141,6 @@ WiFiInterface::toggleWiFiState() {
 void
 WiFiInterface::onConnectionEvent(WiFiConnectionState s) {
   if (s == WiFiConnected) {
-    // Start client port (to send message)
-    udp.begin(config->getOutputPort());
-    delay(50); // ok
     // Start server port (to receive message)
     udp.begin(config->getInputPort());
     wifiLight = true;

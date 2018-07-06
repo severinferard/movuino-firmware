@@ -1,20 +1,28 @@
 #ifndef _MOVUINO_FIRMWARE_GLOBALS_H_
 #define _MOVUINO_FIRMWARE_GLOBALS_H_
 
-#define MAX_CONFIG_STRING_SIZE 60
+#define MOVUINO_FIRMWARE_VERSION_MAJOR 1
+#define MOVUINO_FIRMWARE_VERSION_MINOR 0
+#define MOVUINO_FIRMWARE_VERSION_PATCH 0
 
-#define MAX_OSC_ADDRESSES 30
-#define MAX_OSC_ADDRESS_LENGTH 50
-#define MAX_OSC_STRING_ARG_LENGTH 50
+#define MAX_CONFIG_STRING_SIZE 32
+#define MAX_TOTAL_CONFIG_LENGTH 32
+#define MAX_TOTAL_CONFIG_STRING_SIZE 256
 
-#define DEFAULT_ENABLE_WIFI false
+#define MAX_OSC_ADDRESSES 48
+#define MAX_OSC_ADDRESS_LENGTH 64
+#define MAX_OSC_STRING_ARG_LENGTH 32
+
 #define WIFI_CONNECTION_TIMEOUT 15000
 
-#define DEFAULT_OSC_INPUT_PORT 7400
-#define DEFAULT_OSC_OUTPUT_PORT 7401
+#define DEFAULT_WEB_SERVER_PORT 80
+#define DEFAULT_WEBSOCKET_SERVER_PORT 81
 
-#define DEFAULT_WEB_SERVER_PORT 80 // not used ATM
-#define DEFAULT_WEBSOCKET_SERVER_PORT 81 // not used ATM
+#define DEFAULT_NETWORK_SSID "my_network_ssid"
+#define DEFAULT_NETWORK_PASSWORD "my_network_password"
+#define DEFAULT_HOST_IP "192.168.0.100"
+#define DEFAULT_OSC_INPUT_PORT 7401
+#define DEFAULT_OSC_OUTPUT_PORT 7400
 
 /*
  * From the MPU6050 library docs :
@@ -23,7 +31,7 @@
  * 2 = +/- 8g
  * 3 = +/- 16g
  */
-#define DEFAULT_ACCEL_RANGE 2 // +/- 8g
+#define DEFAULT_ACCEL_RANGE 1 // +/- 4g
 
 /*
  * From the MPU6050 library docs :
@@ -34,6 +42,7 @@
  */
 #define DEFAULT_GYRO_RANGE 2 // +/- 1000 degrees/sec
 
+#define DEFAULT_USE_WIFI true
 #define DEFAULT_USE_SERIAL true // for sensors, button and vibrator
 #define DEFAULT_SEND_SINGLE_FRAME true // pure UDP, no websocket
 
@@ -69,6 +78,12 @@ enum WiFiConnectionState {
   WiFiDisconnected = 0,
   WiFiConnecting,
   WiFiConnected
+};
+
+enum APCommand {
+  APUnknown = 0,
+  APClear,
+  APSettings
 };
 
 //=============================== BOOT MODE ==================================//
@@ -119,6 +134,8 @@ enum oscAddress {
   oscInputWiFiEnable = 0,
   oscInputSetWiFi,
   oscInputGetWiFi,
+  oscInputSetPorts,
+  oscInputGetPorts,
   oscInputSetRange,
   oscInputGetRange,
   oscInputSetConfig,
@@ -131,6 +148,8 @@ enum oscAddress {
   oscOutputWiFiState,
   oscOutputSetWiFi,
   oscOutputGetWiFi,
+  oscOutputSetPorts,
+  oscOutputGetPorts,
   oscOutputSetRange,
   oscOutputGetRange,
   oscOutputSetConfig,
@@ -157,10 +176,12 @@ static void initOSCAddresses(const char *movuinoId) {
   // getters / setters
   initOSCAddress(oscInputSetWiFi, movuinoId, "/wifi/set");
   initOSCAddress(oscInputGetWiFi, movuinoId, "/wifi/get");
+  initOSCAddress(oscInputSetPorts, movuinoId, "/ports/set");
+  initOSCAddress(oscInputGetPorts, movuinoId, "/ports/get");
   initOSCAddress(oscInputSetRange, movuinoId, "/range/set");
   initOSCAddress(oscInputGetRange, movuinoId, "/range/get");
-  initOSCAddress(oscInputSetConfig, movuinoId, "/config/set"); // useSerial, useWiFi, readMagPeriod, outputFramePeriod
-  initOSCAddress(oscInputGetConfig, movuinoId, "/config/get"); // useSerial, useWiFi
+  initOSCAddress(oscInputSetConfig, movuinoId, "/config/set");
+  initOSCAddress(oscInputGetConfig, movuinoId, "/config/get");
   initOSCAddress(oscInputSetAll, movuinoId, "/all/set");
   initOSCAddress(oscInputGetAll, movuinoId, "/all/get");
   // control
@@ -172,6 +193,8 @@ static void initOSCAddresses(const char *movuinoId) {
   // acks for getters / setters
   initOSCAddress(oscOutputSetWiFi, movuinoId, "/wifi/set");
   initOSCAddress(oscOutputGetWiFi, movuinoId, "/wifi/get");
+  initOSCAddress(oscOutputSetPorts, movuinoId, "/ports/set");
+  initOSCAddress(oscOutputGetPorts, movuinoId, "/ports/get");
   initOSCAddress(oscOutputSetRange, movuinoId, "/range/set");
   initOSCAddress(oscOutputGetRange, movuinoId, "/range/get");
   initOSCAddress(oscOutputSetConfig, movuinoId, "/config/set");
@@ -179,7 +202,7 @@ static void initOSCAddresses(const char *movuinoId) {
   initOSCAddress(oscOutputSetAll, movuinoId, "/all/set");
   initOSCAddress(oscOutputGetAll, movuinoId, "/all/get");
   // actual data
-  initOSCAddress(oscOutputLocalIP, movuinoId, "/localIP"); // all, trigger (sysex) => String
+  // initOSCAddress(oscOutputLocalIP, movuinoId, "/localIP"); // all, trigger (sysex) => String
   initOSCAddress(oscOutputSensors, movuinoId, "/sensors"); // all, flow => ax, ay, az, gx, gy, gz, mx, my, mz, btn
   initOSCAddress(oscOutputButton, movuinoId, "/button"); // all, trigger (sysex) => 0 (off), 1 (on), 2 (hold)
   initOSCAddress(oscOutputFrame, movuinoId, "/frame"); // contains sensors, button, vibrating, ip (12 values)

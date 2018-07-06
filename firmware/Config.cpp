@@ -4,78 +4,107 @@
 
 void
 Config::init() {
+  //*
   if (SPIFFS.begin()) {
     disabled = false;
   }
+  //*/
 
   byte mac[6];
   WiFi.macAddress(mac);
 
   String _movuinoId(mac[0], HEX);
   for (int i = 1; i < 6; i++) {
-    // res += ":";
     _movuinoId += String(mac[i], HEX);
   }
 
-  // _movuinoId = "movuino-" + _movuinoId;
   _movuinoId.toCharArray(movuinoId, _movuinoId.length());
-
 }
 
 void
 Config::load() {
+  //*
   if (disabled) return;
 
+  bool fExists = SPIFFS.exists("/config.txt");
   File file = SPIFFS.open("/config.txt", "r");
-  if (file) {
+
+  if (file && fExists) {
     String _initialized = file.readStringUntil('\n');
 
-    char tmpInitialized[MAX_CONFIG_STRING_SIZE];
-    _initialized.toCharArray(tmpInitialized, _initialized.length());
+    // char tmpInitialized[MAX_CONFIG_STRING_SIZE];
+    // _initialized.toCharArray(tmpInitialized, _initialized.length());
 
-    if (strcmp(tmpInitialized, "initialized") != 0) return;
+    // if (strcmp(tmpInitialized, "initialized") == 0) {
+      String _ssid = file.readStringUntil('\n');
+      String _password = file.readStringUntil('\n');
+      String _hostIP = file.readStringUntil('\n');
 
-    useWiFi = file.readStringUntil('\n').toInt() > 0;
+      portIn = file.readStringUntil('\n').toInt();
+      portOut = file.readStringUntil('\n').toInt();
 
-    String _ssid = file.readStringUntil('\n');
-    String _password = file.readStringUntil('\n');
-    String _hostIP = file.readStringUntil('\n');
+      accelRange = file.readStringUntil('\n').toInt();
+      gyroRange = file.readStringUntil('\n').toInt();
 
-    _initialized.toCharArray(initialized, _initialized.length());
-    _ssid.toCharArray(ssid, _ssid.length());
-    _password.toCharArray(password, _password.length());
-    _hostIP.toCharArray(hostIP, _hostIP.length());
+      useWiFi = file.readStringUntil('\n').toInt() > 0;
+      useSerial = file.readStringUntil('\n').toInt() > 0;
+      sendSingleFrame = file.readStringUntil('\n').toInt() > 0;
 
-    portIn = file.readStringUntil('\n').toInt();
-    portOut = file.readStringUntil('\n').toInt();
+      readMagPeriod = file.readStringUntil('\n').toInt();
+      outputFramePeriod = file.readStringUntil('\n').toInt();
+      buttonHoldDuration = file.readStringUntil('\n').toInt();
 
-    accelRange = file.readStringUntil('\n').toInt();
-    gyroRange = file.readStringUntil('\n').toInt();
-
-    useSerial = file.readStringUntil('\n').toInt() > 0;
-    sendSingleFrame = file.readStringUntil('\n').toInt() > 0;
-
-    readMagPeriod = file.readStringUntil('\n').toInt();
-    outputFramePeriod = file.readStringUntil('\n').toInt();
-    buttonHoldDuration = file.readStringUntil('\n').toInt();
+      _initialized.toCharArray(initialized, _initialized.length());
+      _ssid.toCharArray(ssid, _ssid.length());
+      _password.toCharArray(password, _password.length());
+      _hostIP.toCharArray(hostIP, _hostIP.length());
+    // }
 
     file.close();
   }
+  //*/
+
+  /*
+  int address = 0;
+
+  readCharArray(&address, initialized, MAX_CONFIG_STRING_SIZE);
+
+
+  if (strcmp(initialized, "initialized") == 0) {
+    readCharArray(&address, ssid, MAX_CONFIG_STRING_SIZE);
+    readCharArray(&address, password, MAX_CONFIG_STRING_SIZE);
+    readCharArray(&address, hostIP, MAX_CONFIG_STRING_SIZE);
+
+    portIn = (int) readUnsignedInt(&address);
+    portOut = (int) readUnsignedInt(&address);
+
+    accelRange = (int) readUnsignedInt(&address);
+    gyroRange = (int) readUnsignedInt(&address);
+
+    useWiFi = readChar(&address) == '1';
+    useSerial = readChar(&address) == '1';
+    sendSingleFrame = readChar(&address) == '1';
+
+    readMagPeriod = (int) readUnsignedInt(&address);
+    outputFramePeriod = (int) readUnsignedInt(&address);
+    buttonHoldDuration = (int) readUnsignedInt(&address);
+  }
+  //*/
 }
 
 void
 Config::store() {
+  //*
   if (disabled) return;
 
   File file = SPIFFS.open("/config.txt", "w+");
+
   if (file) {
     if (strcmp(initialized, "initialized") != 0){
       strcpy(initialized, "initialized");
     }
 
     file.println(initialized);
-
-    file.println(useWiFi ? "1" : "0");
 
     file.println(ssid);
     file.println(password);
@@ -86,6 +115,7 @@ Config::store() {
     file.println(accelRange);
     file.println(gyroRange);
 
+    file.println(useWiFi ? "1" : "0");
     file.println(useSerial ? "1" : "0");
     file.println(sendSingleFrame ? "1" : "0");
     file.println(readMagPeriod);
@@ -94,6 +124,63 @@ Config::store() {
 
     file.close();
   }
+  //*/
+
+  /*
+  int address = 0;
+
+  writeCharArray(&address, "initialized", MAX_CONFIG_STRING_SIZE);
+  writeCharArray(&address, ssid, MAX_CONFIG_STRING_SIZE);
+  writeCharArray(&address, password, MAX_CONFIG_STRING_SIZE);
+  writeCharArray(&address, hostIP, MAX_CONFIG_STRING_SIZE);
+
+  writeUnsignedInt(&address, (unsigned int) portIn);
+  writeUnsignedInt(&address, (unsigned int) portOut);
+
+  writeUnsignedInt(&address, (unsigned int) accelRange);
+  writeUnsignedInt(&address, (unsigned int) gyroRange);
+
+  writeChar(&address, useWiFi ? '1' : '0');
+  writeChar(&address, useSerial ? '1' : '0');
+  writeChar(&address, sendSingleFrame ? '1' : '0');
+
+  writeUnsignedInt(&address, (unsigned int) readMagPeriod);
+  writeUnsignedInt(&address, (unsigned int) outputFramePeriod);
+  writeUnsignedInt(&address, (unsigned int) buttonHoldDuration);
+
+  EEPROM.commit();
+  //*/
+}
+
+void
+Config::reset() {
+  setInitialized(false);
+
+  setSsid(DEFAULT_NETWORK_SSID);
+  setPassword(DEFAULT_NETWORK_PASSWORD);
+  setHostIP(DEFAULT_HOST_IP);
+  setInputPort(DEFAULT_OSC_INPUT_PORT);
+  setOutputPort(DEFAULT_OSC_OUTPUT_PORT);
+  setAccelRange(DEFAULT_ACCEL_RANGE);
+  setGyroRange(DEFAULT_GYRO_RANGE);
+  setUseWiFi(DEFAULT_USE_WIFI);
+  setUseSerial(DEFAULT_USE_SERIAL);
+  setSendSingleFrame(DEFAULT_SEND_SINGLE_FRAME);
+  setReadMagPeriod(DEFAULT_READ_MAG_PERIOD);
+  setOutputFramePeriod(DEFAULT_OUTPUT_FRAME_PERIOD);
+  setButtonHoldDuration(DEFAULT_BUTTON_HOLD_DURATION);
+
+  if (disabled) return;
+
+  if (SPIFFS.exists("/config.txt")) {
+    SPIFFS.remove("/config.txt");
+  }
+
+  // disabled = true;
+  // SPIFFS.end();
+  // if (SPIFFS.format() && SPIFFS.begin()) {
+  //   disabled = false;
+  // }
 }
 
 //========================= GETTERS AND SETTERS ==============================//
@@ -114,16 +201,6 @@ Config::setInitialized(bool b) {
 }
 
 ////////// WIFI SETTINGS
-
-bool
-Config::getUseWiFi() {
-  return useWiFi;
-}
-
-void
-Config::setUseWiFi(bool b) {
-  useWiFi = b;
-}
 
 const char *
 Config::getSsid() {
@@ -218,6 +295,16 @@ Config::setGyroRange(int r) {
 ////////// OTHER CONFIG PARAMETERS
 
 bool
+Config::getUseWiFi() {
+  return useWiFi;
+}
+
+void
+Config::setUseWiFi(bool b) {
+  useWiFi = b;
+}
+
+bool
 Config::getUseSerial() {
   return useSerial;
 }
@@ -266,3 +353,56 @@ void
 Config::setButtonHoldDuration(int p) {
   buttonHoldDuration = p;
 }
+
+//====================== EEPROM READ / WRITE UTILITIES =======================//
+
+/*
+char
+Config::readChar(int *address) {
+  return EEPROM.read((*address)++);
+}
+
+void
+Config::writeChar(int *address, char c) {
+  EEPROM.write((*address)++, c);
+}
+
+void
+Config::readCharArray(int *address, char *str, unsigned int len) {
+  for (int i = 0; i < len; i++) {
+    *(str + i) = EEPROM.read((*address)++);
+  }
+}
+
+void
+Config::writeCharArray(int *address, char *str, unsigned int len) {
+  for (int i = 0; i < len; i++) {
+    EEPROM.write((*address)++, *(str + i));
+  }
+}
+
+unsigned int
+Config::readUnsignedInt(int *address) {
+  // High endian reading :
+  // http://projectsfromtech.blogspot.fr/2013/09/combine-2-bytes-into-int-on-arduino.html
+  byte x_high, x_low;
+
+  x_high = EEPROM.read((*address)++);
+  x_low = EEPROM.read((*address)++);
+
+  unsigned int combined;
+  combined = x_high;        //send x_high to rightmost 8 bits
+  combined = combined<<8;   //shift x_high over to leftmost 8 bits
+  combined |= x_low;        //logical OR keeps x_high intact in combined and fills in rightmost 8 bits
+
+  return combined;
+}
+
+void
+Config::writeUnsignedInt(int *address, unsigned int v) {
+  // High endian storage :
+  EEPROM.write((*address)++, highByte(v));
+  EEPROM.write((*address)++, lowByte(v));
+}
+//*/
+

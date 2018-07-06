@@ -2,6 +2,7 @@
 #define _MOVUINO_FIRMWARE_CONFIG_H_
 
 #include <Arduino.h>
+// #include <EEPROM.h>
 #include "globals.h"
 
 class Config {
@@ -12,8 +13,6 @@ private:
 
   char initialized[MAX_CONFIG_STRING_SIZE];
   char movuinoId[MAX_CONFIG_STRING_SIZE];
-
-  bool useWiFi;
 
   char ssid[MAX_CONFIG_STRING_SIZE];
   char password[MAX_CONFIG_STRING_SIZE];
@@ -26,6 +25,7 @@ private:
 
   // except for sensors, button and vibrator,
   // serial comm is never really disabled
+  bool useWiFi;
   bool useSerial;
   bool sendSingleFrame;
   // for sensors
@@ -38,11 +38,11 @@ private:
 public:
   Config() :
   disabled(true),
-  useWiFi(DEFAULT_ENABLE_WIFI),
   portIn(DEFAULT_OSC_INPUT_PORT),
   portOut(DEFAULT_OSC_OUTPUT_PORT),
   accelRange(DEFAULT_ACCEL_RANGE),
   gyroRange(DEFAULT_GYRO_RANGE),
+  useWiFi(DEFAULT_USE_WIFI),
   useSerial(DEFAULT_USE_SERIAL),
   sendSingleFrame(DEFAULT_SEND_SINGLE_FRAME),
   readMagPeriod(DEFAULT_READ_MAG_PERIOD),
@@ -50,9 +50,11 @@ public:
   buttonHoldDuration(DEFAULT_BUTTON_HOLD_DURATION) {
     strcpy(initialized, "uninitialized");
     strcpy(movuinoId, "");
-    strcpy(ssid, "my_network_ssid");
-    strcpy(password, "my_network_pass");
-    strcpy(hostIP, "192.168.0.100");
+    strcpy(ssid, DEFAULT_NETWORK_SSID);
+    strcpy(password, DEFAULT_NETWORK_PASSWORD);
+    strcpy(hostIP, DEFAULT_HOST_IP);
+
+    // EEPROM.begin(512);
   }
 
   ~Config() {}
@@ -60,6 +62,7 @@ public:
   void init();
   void load();
   void store();
+  void reset();
 
   //========================= ALL GETTERS AND SETTERS ========================//
   bool getInitialized();
@@ -106,6 +109,20 @@ public:
 
   int getButtonHoldDuration();
   void setButtonHoldDuration(int d);
+
+private:
+  //===================== EEPROM READ / WRITE UTILITIES ======================//
+
+  /*
+  char readChar(int *address);
+  void writeChar(int *address, char c);
+
+  void readCharArray(int *address, char *str, unsigned int len);
+  void writeCharArray(int *address, char *str, unsigned int len);
+
+  unsigned int readUnsignedInt(int *address);
+  void writeUnsignedInt(int *address, unsigned int v);
+  //*/
 };
 
 #endif /* _MOVUINO_FIRMWARE_CONFIG_H_ */
