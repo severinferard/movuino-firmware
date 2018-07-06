@@ -98,7 +98,7 @@ All the `/xxxx/get` messages are responses to the corresponding input messages.
 The firmware also allows to boot in Access Point mode, providing access to a configuration page where all the settings can be modified and stored to the local configuration file.
 
 <div style="text-align: center;">
-![Movuino AP interface](https://raw.githubusercontent.com/josephlarralde/movuino-firmware/master/movuino-ap-interface.jpg)
+<img src="https://raw.githubusercontent.com/josephlarralde/movuino-firmware/master/movuino-ap-interface.jpg">
 </div>
 
 To boot in AP mode, turn the movuino on while holding the button, and wait until the blue LED starts blinking quickly to release it.
