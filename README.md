@@ -56,6 +56,12 @@ OSC routes are defined in the file `globals.h`, and the routing mostly happens i
 
 Movuino responds to `/wifi/enable` and all the `/xxxx/set` messages by forwarding them back with their original values to the sender as an acknowledgement.
 Except `/vibroPulse` and `/vibroNow`, all the input messages are directly taken into account and stored to a configuration file which will be loaded on reboot.
+Parameters of type `bool` use int values (`0` for `false` and `1` for `true`).
+`hostIP` must have the form `a.b.c.d`, where `a`, `b`, `c` and `d` are integer values within the [0;255] range.
+`accelRange` can take the values `0` (+/- 2g), `1` (+/- 4g), `2` (+/- 8g) or `3` (+/- 16g).
+`gyroRange` can take the values `0` (+/- 250 deg/s), `1` (+/- 500 deg/s), `2` (+/- 1000 deg/s) or `3` (+/- 2000 deg/s).
+All the parameters named `xxxPeriod` and `xxxDuration` are expressed in milliseconds.
+If the specified `times` parameter in the `/vibroPulse` message equals `-1`, the pulse will go on forever until a new message with another value is received
 
 #### output
 
@@ -86,6 +92,8 @@ The movuino will create a network named `movuino-xxxxxxxxxx`. Connect to this ne
 ## TODO's
 
 * Add websocket support to OSC messages
+* Simplify API
+* Add more vibration modes
 * ...
 
 ## credits
