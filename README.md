@@ -89,13 +89,14 @@ All the `/xxxx/get` messages are responses to the corresponding input messages.
 * All the parameters named `xxxPeriod` and `xxxDuration` are expressed in milliseconds.
 * If the specified `times` parameter in the `/vibroPulse` message equals `-1`, the pulse will go on forever until a new message with another value is received
 * `/wifi/state` is the only message not sent via WiFi, as it gives the WiFi connection state in real-time (0 is disconnected, 1 is connected, and 2 is connecting).
-* When the `sendSingleFrame` option is enabled, sensors values and the button state are sent altogether in the `/frame` message, at 1000 * `outputFramePeriod` Hz.
+* When the `sendSingleFrame` option is enabled, sensor values and the button state are sent altogether via the `/frame` message, at 1000 * `outputFramePeriod` Hz.
 * If `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message at 1000 * `outputFramePeriod` Hz, and the button state is sent via the `/button` message on value change only.
 * For the time being webSocket transmission of OSC messages is not implemented, so if the network has a lot traffic, it is advised to enable `sendSingleFrame` to avoid losing button state messages, and to configure the board through serial connection for the same reason.
 
 ## AP mode
 
 The firmware also allows to boot in Access Point mode, providing access to a configuration page where all the settings can be modified and stored to the local configuration file.
+
 To boot in AP mode, turn the movuino on while holding the button, and wait until the blue LED starts blinking quickly to release it.
 The movuino will create a network named `movuino-xxxxxxxxxx`. Connect to this network, then visit the url `http://192.168.1.1` and you should see the configuration page appear, which will let you change all the settings available via OSC.
 
