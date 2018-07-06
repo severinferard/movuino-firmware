@@ -77,7 +77,7 @@ The `/sensors` and `/frame` messages are always sent at a frequency of 1000 * `o
 
 #### notes
 
-* Except `/vibroPulse` and `/vibroNow`, all the input messages are directly taken into account and stored to a configuration file which will be loaded on reboot.
+* All the `/xxxx/set` input messages update some parameters that are automatically stored to a local configuration file. This configuration file is always loaded on boot, so all modifications are always persistent.
 * Parameters of type `bool` use int values (`0` for `false` and `1` for `true`).
 * `hostIP` has the form `a.b.c.d`, where `a`, `b`, `c` and `d` are integer values within the [0;255] range.
 * `accelRange` can take the following values
