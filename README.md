@@ -43,8 +43,10 @@ OSC routes are defined in the file `globals.h`, and the routing mostly happens i
 #### input
 
 * `/wifi/enable <onOff(bool)>`
-* `/wifi/set <ssid(string)> <password(string)> <hostIP(string)> <inputUDPPort(int)> <outputUDPPort(int)>`
+* `/wifi/set <ssid(string)> [ <password(string)> ] <hostIP(string)>`
 * `/wifi/get`
+* `/ports/set  <inputUDPPort(int)> <outputUDPPort(int)>`
+* `/ports/get`
 * `/range/set <accelRange(int)> <gyroRange(int)>`
 * `/range/get`
 * `/config/set <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldTimeout(int)>`
@@ -53,18 +55,38 @@ OSC routes are defined in the file `globals.h`, and the routing mostly happens i
 * `/vibroNow <onOff(bool)>`
 
 Movuino responds to `/wifi/enable` and all the `/xxxx/set` messages by forwarding them back with their original values to the sender as an acknowledgement.
+Except `/vibroPulse` and `/vibroNow`, all the input messages are directly taken into account and stored to a configuration file which will be loaded on reboot.
 
 #### output
 
 Acknowledgement messages apart, the output namespace is :
 
 * `/wifi/state <wifiConnectionState(int)>`
-* `/wifi/get <ssid(string)> <password(string)> <hostIP(string)> <inputUDPPort(int)> <outputUDPPort(int)>`
+* `/wifi/get <ssid(string)> <password(string)> <hostIP(string)>`
+* `/ports/get <inputUDPPort(int)> <outputUDPPort(int)>`
 * `/range/get <accelRange(int)> <gyroRange(int)>`
 * `/config/get <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldTimeout(int)>`
 * `/sensors <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)>`
 * `/button <buttonState(int)>`
 * `/frame  <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)> <buttonState(int)> <vibratorState(bool)>`
+
+`/wifi/state` is the only message not sent via WiFi, as it gives the WiFi connection state in real-time (0 is disconnected, 1 is connected, and 2 is connecting).
+All the `/xxxx/get` messages are responses to the corresponding input messages.
+When the `sendSingleFrame` option is enabled, sensors values and the button state are sent altogether in the `/frame` message, at 1000 * `outputFramePeriod` Hz.
+If `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message at 1000 * `outputFramePeriod` Hz, and the button state is sent via the `/button` message on value change only.
+
+For the time being webSocket transmission of OSC messages is not implemented, so if the network has a lot traffic, it is advised to enable `sendSingleFrame` to avoid losing button state messages, and to configure the board through serial connection for the same reason.
+
+## AP mode
+
+The firmware also allows to boot in Access Point mode, providing access to a configuration page where all the settings can be modified and stored to the local configuration file.
+To boot in AP mode, turn the movuino on while holding the button, and wait until the blue LED starts blinking quickly to release it.
+The movuino will create a network named `movuino-xxxxxxxxxx`. Connect to this network, then visit the url `http://192.168.1.1` and you should see the configuration page appear, which will let you change all the settings available via OSC.
+
+## TODO's
+
+* Add websocket support to OSC messages
+* ...
 
 ## credits
 
