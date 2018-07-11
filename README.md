@@ -42,17 +42,18 @@ OSC routes are defined in the file `globals.h`, and the routing mostly happens i
 
 #### input
 
-* `/wifi/enable <onOff(bool)>`
-* `/wifi/set <ssid(string)> [ <password(string)> ] <hostIP(string)>`
-* `/wifi/get`
-* `/ports/set  <inputUDPPort(int)> <outputUDPPort(int)>`
-* `/ports/get`
-* `/range/set <accelRange(int)> <gyroRange(int)>`
-* `/range/get`
-* `/config/set <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldDuration(int)>`
-* `/config/get`
-* `/vibroPulse <onDuration(int)> <offDuration(int)> <times(int)>`
-* `/vibroNow <onOff(bool)>`
+* `/hello`
+* `/movuino/<boardID>/wifi/enable <onOff(bool)>`
+* `/movuino/<boardID>/wifi/set <ssid(string)> [ <password(string)> ] <hostIP(string)>`
+* `/movuino/<boardID>/wifi/get`
+* `/movuino/<boardID>/ports/set  <inputUDPPort(int)> <outputUDPPort(int)>`
+* `/movuino/<boardID>/ports/get`
+* `/movuino/<boardID>/range/set <accelRange(int)> <gyroRange(int)>`
+* `/movuino/<boardID>/range/get`
+* `/movuino/<boardID>/config/set <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldDuration(int)>`
+* `/movuino/<boardID>/config/get`
+* `/movuino/<boardID>/vibroPulse <onDuration(int)> <offDuration(int)> <times(int)>`
+* `/movuino/<boardID>/vibroNow <onOff(bool)>`
 
 Movuino responds to `/wifi/enable` and all the `/xxxx/set` messages by forwarding them back with their original values to the sender as an acknowledgement.
 
@@ -60,16 +61,17 @@ Movuino responds to `/wifi/enable` and all the `/xxxx/set` messages by forwardin
 
 Acknowledgement messages apart, the output namespace is :
 
-* `/wifi/state <wifiConnectionState(int)>`
-* `/wifi/get <ssid(string)> <password(string)> <hostIP(string)>`
-* `/ports/get <inputUDPPort(int)> <outputUDPPort(int)>`
-* `/range/get <accelRange(int)> <gyroRange(int)>`
-* `/config/get <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldDuration(int)>`
-* `/sensors <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)>`
-* `/button <buttonState(int)>`
-* `/frame  <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)> <buttonState(int)> <vibratorState(bool)>`
+* `/hello "movuino" <boardID(string)> <firmwareVersion(string)> <wifiConnectionState(int)> <boardIP(string)>` 
+* `/movuino/<boardID>/wifi/state <wifiConnectionState(int)> <boardIP(string)>`
+* `/movuino/<boardID>/wifi/get <ssid(string)> <password(string)> <hostIP(string)>`
+* `/movuino/<boardID>/ports/get <inputUDPPort(int)> <outputUDPPort(int)>`
+* `/movuino/<boardID>/range/get <accelRange(int)> <gyroRange(int)>`
+* `/movuino/<boardID>/config/get <useSerial(bool)> <sendSingleFrame(bool)> <readMagPeriod(int)> <outputFramePeriod(int)> <buttonHoldDuration(int)>`
+* `/movuino/<boardID>/sensors <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)>`
+* `/movuino/<boardID>/button <buttonState(int)>`
+* `/movuino/<boardID>/frame <ax(float)> <ay(float)> <az(float)> <gx(float)> <gy(float)> <gz(float)> <mx(float)> <my(float)> <mz(float)> <buttonState(int)> <vibratorState(bool)>`
 
-All the `/xxxx/get` messages are responses to the corresponding input messages.
+`/hello` and all the `/xxxx/get` messages are responses to the corresponding input messages.
 
 When the `sendSingleFrame` option is enabled, sensor values and the button state are sent together within the `/frame` message.
 When `sendSingleFrame` is disabled, sensor values are sent via the `/sensors` message, and the button state is sent via the `/button` message on value change only.
@@ -104,7 +106,7 @@ The `/sensors` and `/frame` messages are always sent at a frequency of 1000 * `o
 
 ## AP mode
 
-The firmware also allows to boot in Access Point mode, providing access to a configuration page where all the settings can be modified and stored to the local configuration file.
+The firmware also allows to boot in Access Point mode, and serve a configuration web page where all the settings can be modified and stored to the local configuration file.
 
 <div style="text-align: center;">
 <img src="https://raw.githubusercontent.com/josephlarralde/movuino-firmware/master/movuino-ap-interface.jpg">

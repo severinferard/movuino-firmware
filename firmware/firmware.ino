@@ -33,6 +33,7 @@ void setup() {
 
   if (mode == WiFiStation) {
     Wire.begin();
+    Wire.setClock(400000);
     router.init(&config, &button, &sensors, &vibrator, &serial, &wifi);
   } else {
     ap = new AccessPoint();
@@ -46,4 +47,6 @@ void loop() {
   } else {
     ap->update();
   }
+
+  // delay(5); // let the board breathe
 }

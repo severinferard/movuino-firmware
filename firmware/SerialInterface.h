@@ -5,6 +5,7 @@
 #include <SLIPEncodedSerial.h>
 #include <SLIPEncodedUSBSerial.h>
 #include <OSCMessage.h>
+#include <OSCBundle.h>
 
 class Router;
 

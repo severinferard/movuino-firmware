@@ -17,7 +17,7 @@ SerialInterface::update() {
 
 void
 SerialInterface::readMessages(/*Router *router*/) {
-  if (slip->available()) {
+  if (slip->available() > 0) {
     OSCMessage msg;
     int size;
 
@@ -30,9 +30,7 @@ SerialInterface::readMessages(/*Router *router*/) {
     }
 
     if (!msg.hasError()) {
-      router->routeSerialMessage(msg);
-    } else {
-      router->serialMessageErrorCallback(msg);
+      router->routeSerialMessage(msg);        
     }
   }
 }

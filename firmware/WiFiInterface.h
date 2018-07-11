@@ -29,6 +29,7 @@ private:
   // timer specific vars
   bool wifiLight;
   bool batLight;
+  WiFiConnectionState connectionState;
   unsigned long connectionTimeout;
 
   bool initialized;
@@ -44,6 +45,7 @@ public:
   Timer(blinkPeriod),
   wifiLight(false),
   batLight(false),
+  connectionState(WiFiDisconnected),
   connectionTimeout(timeout),
   initialized(false) {}
 
@@ -63,6 +65,7 @@ public:
   void getIPAddress(int *res); // res must be of type int[4]
   String getStringIPAddress();
 
+  WiFiConnectionState getConnectionState();
   bool isConnected();
   void startWiFi();
   void stopWiFi();

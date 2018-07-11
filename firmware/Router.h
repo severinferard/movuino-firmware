@@ -43,6 +43,8 @@ private:
   int getButtonIntValue(ButtonState s);
   void routeOSCMessage(OSCMessage& msg);
 
+  void sayHello();
+
   void sendWiFiConnectionMessage(int i);
   void sendWiFiSettings(oscAddress a);
   void sendPorts(oscAddress a);

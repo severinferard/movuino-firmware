@@ -13,6 +13,7 @@ private:
 
   char initialized[MAX_CONFIG_STRING_SIZE];
   char movuinoId[MAX_CONFIG_STRING_SIZE];
+  char firmwareVersion[MAX_CONFIG_STRING_SIZE];
 
   char ssid[MAX_CONFIG_STRING_SIZE];
   char password[MAX_CONFIG_STRING_SIZE];
@@ -50,6 +51,7 @@ public:
   buttonHoldDuration(DEFAULT_BUTTON_HOLD_DURATION) {
     strcpy(initialized, "uninitialized");
     strcpy(movuinoId, "");
+    strcpy(firmwareVersion, "");
     strcpy(ssid, DEFAULT_NETWORK_SSID);
     strcpy(password, DEFAULT_NETWORK_PASSWORD);
     strcpy(hostIP, DEFAULT_HOST_IP);
@@ -69,7 +71,7 @@ public:
   void setInitialized(bool b);
 
   const char *getMovuinoId();
-  // void setMovuinoId(const char *id);
+  const char *getFirmwareVersion();
 
   bool getUseWiFi();
   void setUseWiFi(bool b);

@@ -55,7 +55,7 @@ Router::routeSerialMessage(OSCMessage& msg) {
 }
 
 void
-Router::serialMessageErrorCallback(OSCMessage&msg) {
+Router::serialMessageErrorCallback(OSCMessage& msg) {
   // TODO
 }
 
@@ -63,17 +63,7 @@ Router::serialMessageErrorCallback(OSCMessage&msg) {
 
 void
 Router::onWiFiConnectionEvent(WiFiConnectionState s) {
-  int val = 0;
-
-  if (s == WiFiConnecting) { // send 2
-    val = 2;
-  } else if (s == WiFiConnected) {
-    val = 1;
-  } else if (s == WiFiDisconnected) {
-    val = 0;
-  }
-
-  sendWiFiConnectionMessage(val);
+  sendWiFiConnectionMessage(getConnectionStateOSCValue(s));
 }
 
 void
@@ -118,7 +108,11 @@ Router::routeOSCMessage(OSCMessage& msg) {
   msg.getAddress(address);
 
   //----------------------------------------------------------------------------
-  if (strcmp(address, oscAddresses[oscInputWiFiEnable]) == 0 && msgLength > 0) { // usually from serial
+  if (strcmp(address, oscAddresses[oscInputHello]) == 0 && msgLength == 0) { // usually from serial
+    // respond with "movuino", id, firmware version, wifistate
+    sayHello();
+  //----------------------------------------------------------------------------
+  } else if (strcmp(address, oscAddresses[oscInputWiFiEnable]) == 0 && msgLength > 0) { // usually from serial
     config->setUseWiFi(msg.getInt(0) > 0);
     config->store();
 
@@ -224,12 +218,26 @@ Router::routeOSCMessage(OSCMessage& msg) {
   }
 }
 
+void Router::sayHello() {
+  OSCMessage msg(oscAddresses[oscOutputHello]);
+  msg.add("movuino");
+  msg.add(config->getMovuinoId());
+  msg.add(config->getFirmwareVersion());
+  msg.add(getConnectionStateOSCValue(wifi->getConnectionState()));
+  msg.add(wifi->getStringIPAddress().c_str());
+
+  sendSerialMessage(msg);
+  msg.empty();
+}
+
 void
 Router::sendWiFiConnectionMessage(int i) {
   OSCMessage msg(oscAddresses[oscOutputWiFiState]);
   msg.add(i);
+  msg.add(wifi->getStringIPAddress().c_str());
 
   sendSerialMessage(msg);
+  msg.empty();
 }
 
 void
@@ -241,6 +249,7 @@ Router::sendWiFiSettings(oscAddress a) {
 
   sendSerialMessage(msg);
   sendWiFiMessage(msg);
+  msg.empty();
 }
 
 void
@@ -251,6 +260,7 @@ Router::sendPorts(oscAddress a) {
 
   sendSerialMessage(msg);
   sendWiFiMessage(msg);
+  msg.empty();
 }
 
 void
@@ -261,6 +271,7 @@ Router::sendAccelGyroRanges(oscAddress a) {
 
   sendSerialMessage(msg);
   sendWiFiMessage(msg);
+  msg.empty();
 }
 
 void
@@ -274,6 +285,7 @@ Router::sendGlobalConfig(oscAddress a) {
 
   sendSerialMessage(msg);
   sendWiFiMessage(msg);
+  msg.empty();
 }
 
 void
@@ -288,6 +300,8 @@ Router::sendButtonMessage(int i) {
   if (config->getUseWiFi()) {
     sendWiFiMessage(msg);
   }
+
+  msg.empty();
 }
 
 void
@@ -305,6 +319,8 @@ Router::sendSensorsMessage(float *f) {
   if (config->getUseWiFi()) {
     sendWiFiMessage(msg);
   }
+
+  msg.empty();
 }
 
 void
@@ -327,10 +343,12 @@ Router::sendSingleFrame(float *f) {
   if (config->getUseWiFi()) {
     sendWiFiMessage(msg);
   }
+
+  msg.empty();
 }
 
 void
-Router::sendWiFiMessage(OSCMessage& msg/*, bool critical = false*/) {
+Router::sendWiFiMessage(OSCMessage& msg) {
   wifi->sendMessage(msg, config->getHostIP(), config->getOutputPort());
 }
 

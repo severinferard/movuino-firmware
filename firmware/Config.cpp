@@ -19,6 +19,12 @@ Config::init() {
   }
 
   _movuinoId.toCharArray(movuinoId, _movuinoId.length());
+
+  sprintf(firmwareVersion, "%i.%i.%i",
+    MOVUINO_FIRMWARE_VERSION_MAJOR,
+    MOVUINO_FIRMWARE_VERSION_MINOR,
+    MOVUINO_FIRMWARE_VERSION_PATCH
+  );
 }
 
 void
@@ -32,33 +38,28 @@ Config::load() {
   if (file && fExists) {
     String _initialized = file.readStringUntil('\n');
 
-    // char tmpInitialized[MAX_CONFIG_STRING_SIZE];
-    // _initialized.toCharArray(tmpInitialized, _initialized.length());
+    String _ssid = file.readStringUntil('\n');
+    String _password = file.readStringUntil('\n');
+    String _hostIP = file.readStringUntil('\n');
 
-    // if (strcmp(tmpInitialized, "initialized") == 0) {
-      String _ssid = file.readStringUntil('\n');
-      String _password = file.readStringUntil('\n');
-      String _hostIP = file.readStringUntil('\n');
+    portIn = file.readStringUntil('\n').toInt();
+    portOut = file.readStringUntil('\n').toInt();
 
-      portIn = file.readStringUntil('\n').toInt();
-      portOut = file.readStringUntil('\n').toInt();
+    accelRange = file.readStringUntil('\n').toInt();
+    gyroRange = file.readStringUntil('\n').toInt();
 
-      accelRange = file.readStringUntil('\n').toInt();
-      gyroRange = file.readStringUntil('\n').toInt();
+    useWiFi = file.readStringUntil('\n').toInt() > 0;
+    useSerial = file.readStringUntil('\n').toInt() > 0;
+    sendSingleFrame = file.readStringUntil('\n').toInt() > 0;
 
-      useWiFi = file.readStringUntil('\n').toInt() > 0;
-      useSerial = file.readStringUntil('\n').toInt() > 0;
-      sendSingleFrame = file.readStringUntil('\n').toInt() > 0;
+    readMagPeriod = file.readStringUntil('\n').toInt();
+    outputFramePeriod = file.readStringUntil('\n').toInt();
+    buttonHoldDuration = file.readStringUntil('\n').toInt();
 
-      readMagPeriod = file.readStringUntil('\n').toInt();
-      outputFramePeriod = file.readStringUntil('\n').toInt();
-      buttonHoldDuration = file.readStringUntil('\n').toInt();
-
-      _initialized.toCharArray(initialized, _initialized.length());
-      _ssid.toCharArray(ssid, _ssid.length());
-      _password.toCharArray(password, _password.length());
-      _hostIP.toCharArray(hostIP, _hostIP.length());
-    // }
+    _initialized.toCharArray(initialized, _initialized.length());
+    _ssid.toCharArray(ssid, _ssid.length());
+    _password.toCharArray(password, _password.length());
+    _hostIP.toCharArray(hostIP, _hostIP.length());
 
     file.close();
   }
@@ -188,6 +189,11 @@ Config::reset() {
 const char *
 Config::getMovuinoId() {
   return movuinoId;
+}
+
+const char *
+Config::getFirmwareVersion() {
+  return firmwareVersion;
 }
 
 bool

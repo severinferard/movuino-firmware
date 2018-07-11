@@ -81,6 +81,11 @@ WiFiInterface::sendMessage(OSCMessage& msg, const char *hostIP, int portOut) {
 
 //============================= WIFI CONNECTION ==============================//
 
+WiFiConnectionState
+WiFiInterface::getConnectionState() {
+  return connectionState;
+}
+
 bool
 WiFiInterface::isConnected() {
   return WiFi.status() == WL_CONNECTED;
@@ -147,6 +152,7 @@ WiFiInterface::onConnectionEvent(WiFiConnectionState s) {
     digitalWrite(pinLedWifi, LOW); // turn ON wifi led
   }
 
+  connectionState = s;
   router->onWiFiConnectionEvent(s);
 }
 

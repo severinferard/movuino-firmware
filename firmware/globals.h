@@ -5,6 +5,8 @@
 #define MOVUINO_FIRMWARE_VERSION_MINOR 0
 #define MOVUINO_FIRMWARE_VERSION_PATCH 0
 
+#define MOVUINO_READ_MAG_ASYNC false
+
 #define MAX_CONFIG_STRING_SIZE 32
 #define MAX_TOTAL_CONFIG_LENGTH 32
 #define MAX_TOTAL_CONFIG_STRING_SIZE 256
@@ -125,13 +127,30 @@ static WiFiBootMode checkBootMode() {
   return WiFiStation;
 }
 
+//============================ SOME UTIL(S) ==================================//
+
+static int getConnectionStateOSCValue(WiFiConnectionState s) {
+  int val = 0;
+
+  if (s == WiFiConnecting) { // send 2
+    val = 2;
+  } else if (s == WiFiConnected) {
+    val = 1;
+  } else if (s == WiFiDisconnected) {
+    val = 0;
+  }
+
+  return val;
+}
+
 //============================= OSC ADDRESSES ================================//
 
 static char oscAddresses[MAX_OSC_ADDRESSES][MAX_OSC_ADDRESS_LENGTH];
 
 enum oscAddress {
   // input messages
-  oscInputWiFiEnable = 0,
+  oscInputHello = 0,
+  oscInputWiFiEnable,
   oscInputSetWiFi,
   oscInputGetWiFi,
   oscInputSetPorts,
@@ -145,6 +164,7 @@ enum oscAddress {
   oscInputVibroPulse,
   oscInputVibroNow,
   // output messages
+  oscOutputHello,
   oscOutputWiFiState,
   oscOutputSetWiFi,
   oscOutputGetWiFi,
@@ -172,6 +192,7 @@ static void initOSCAddress(oscAddress a, const char *movuinoId, const char *path
 
 static void initOSCAddresses(const char *movuinoId) {
   // input messages
+  strcpy(oscAddresses[oscInputHello], "/hello");
   initOSCAddress(oscInputWiFiEnable, movuinoId, "/wifi/enable");
   // getters / setters
   initOSCAddress(oscInputSetWiFi, movuinoId, "/wifi/set");
@@ -189,6 +210,7 @@ static void initOSCAddresses(const char *movuinoId) {
   initOSCAddress(oscInputVibroNow, movuinoId, "/vibroNow");
 
   // output messages
+  strcpy(oscAddresses[oscOutputHello], "/hello");
   initOSCAddress(oscOutputWiFiState, movuinoId, "/wifi/state"); // serial, trigger (sysex) => wifi state : 0 (disconnected), 1 (connected), 2 (connecting)
   // acks for getters / setters
   initOSCAddress(oscOutputSetWiFi, movuinoId, "/wifi/set");

@@ -57,20 +57,31 @@ Sensors::init(Config *c, Router *r) {
   setAccelRange(config->getAccelRange());
   setGyroRange(config->getGyroRange());
 
-  readMagTimer->setPeriod(config->getReadMagPeriod());
-  oscOutTimer->setPeriod(config->getOutputFramePeriod());
+  if (MOVUINO_READ_MAG_ASYNC) {
+    readMagTimer->setPeriod(config->getReadMagPeriod());
+    oscOutTimer->setPeriod(config->getOutputFramePeriod());
 
-  readMagTimer->start();
-  oscOutTimer->start();
+    readMagTimer->start();
+    oscOutTimer->start();
+  }
 }
 
 void
 Sensors::update() {
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-  updateAccelGyroValues();
+  if (MOVUINO_READ_MAG_ASYNC) {
+    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+    updateAccelGyroValues();
+    
+    readMagTimer->update();
+    oscOutTimer->update();
+  } else {
+    // readMagValues();
+    mpu.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
+    updateAccelGyroValues();
+    updateMagValues();
 
-  readMagTimer->update();
-  oscOutTimer->update();
+    sendSensorValues();
+  }
 }
 
 ////////// SENSOR RANGES
@@ -106,6 +117,27 @@ Sensors::setOutputFramePeriod(int p) {
 }
 
 //-------------------------------- PRIVATE -----------------------------------//
+
+// original readMag method, to allow  synchronous reading
+// (Timers must be off and sendSensorValues must be called explicitly)
+/*
+void
+Sensors::readMagValues() {
+  // set i2c bypass enable pin to true to access magnetometer
+  I2Cdev::writeByte(MPU6050_DEFAULT_ADDRESS, MPU6050_RA_INT_PIN_CFG, 0x02);
+  delay(10);
+  // enable the magnetometer
+  I2Cdev::writeByte(MPU9150_RA_MAG_ADDRESS, 0x0A, 0x01);
+  delay(10);
+  // read it !
+  I2Cdev::readBytes(MPU9150_RA_MAG_ADDRESS, MPU9150_RA_MAG_XOUT_L, 6, magBuffer);
+  mx = (((int16_t)magBuffer[1]) << 8) | magBuffer[0];
+  my = (((int16_t)magBuffer[3]) << 8) | magBuffer[2];
+  mz = (((int16_t)magBuffer[5]) << 8) | magBuffer[4];
+
+  updateMagValues();
+}
+//*/
 
 ////////// MagTimer callback :
 void
