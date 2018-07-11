@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "I2Cdev.h"
 #include "Config.h"
 #include "Router.h"
@@ -167,12 +168,39 @@ Sensors::updateAccelGyroValues() {
   values[5] = gz / float(32768);
 }
 
-/**
- * TODO: bring back Adrien's recalibration here and test it more
- */
 void
 Sensors::updateMagValues() {
+  magnetometerAutoCalibration();
+  // or use some future calibration procedure result
+
   values[6] = mx / float(100);
   values[7] = my / float(100);
   values[8] = mz / float(100);
 }
+
+void
+Sensors::magnetometerAutoCalibration() {
+  int magVal[] = { mx, my, mz };
+
+  for (int i = 0; i < 3; i++) {
+    // Compute magnetometer range
+    if (magVal[i] < magRange[2 * i]) {
+      magRange[2 * i] = magVal[i]; // update minimum values on each axis
+    }
+
+    if (magVal[i] > magRange[2 * i + 1]) {
+      magRange[2 * i + 1] = magVal[i]; // update maximum values on each axis
+    }
+
+    // Scale magnetometer values
+    if (magRange[2*i] != magRange[2*i+1]) {
+      magVal[i] = map(magVal[i], magRange[2*i], magRange[2*i+1], -100, 100);
+    }
+  }
+
+  // Update magnetometer values
+  mx = magVal[0];
+  my = magVal[1];
+  mz = magVal[2];
+}
+
