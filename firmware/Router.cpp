@@ -68,9 +68,11 @@ Router::onWiFiConnectionEvent(WiFiConnectionState s) {
 
 void
 Router::onButtonEvent(ButtonState s) {
-  if (!config->getSendSingleFrame()) {
-    sendButtonMessage(getButtonIntValue(s));
-  }
+  // if (!config->getSendSingleFrame()) {
+  //   sendButtonMessage(getButtonIntValue(s));
+  // }
+
+  sendButtonMessage(getButtonIntValue(s)); // send button anyways
 }
 
 void
@@ -119,11 +121,8 @@ Router::routeOSCMessage(OSCMessage& msg) {
     sendSerialMessage(msg);
     sendWiFiMessage(msg);
 
-    if (config->getUseWiFi()) {
-      wifi->startWiFi();
-    } else {
-      wifi->stopWiFi();
-    }
+    wifi->stopWiFi();
+    wifi->startWiFi();// will check if useWifi is set
   //----------------------------------------------------------------------------
   } else if (strcmp(address, oscAddresses[oscInputSetWiFi]) == 0 && msgLength > 1) {
     // we can have :
@@ -145,7 +144,9 @@ Router::routeOSCMessage(OSCMessage& msg) {
     }
 
     config->store();
+
     sendWiFiSettings(oscOutputSetWiFi);
+
     wifi->stopWiFi();
     wifi->startWiFi(); // will check if useWifi is set
   //----------------------------------------------------------------------------
@@ -163,7 +164,9 @@ Router::routeOSCMessage(OSCMessage& msg) {
     config->setOutputPort(out);
 
     config->store();
+
     sendPorts(oscOutputSetPorts);
+    
     wifi->stopWiFi();
     wifi->startWiFi(); // will check if useWifi is set
   //----------------------------------------------------------------------------
