@@ -11,7 +11,9 @@
 #define MAX_TOTAL_CONFIG_LENGTH 32
 #define MAX_TOTAL_CONFIG_STRING_SIZE 256
 
-#define MAX_OSC_ADDRESSES 48
+#define MAX_OSC_ADDRESSES 40
+#define MAX_INPUT_OSC_ADDRESSES 20
+#define MAX_OUTPUT_OSC_ADDRESSES 20
 #define MAX_OSC_ADDRESS_LENGTH 64
 #define MAX_OSC_STRING_ARG_LENGTH 32
 
@@ -145,10 +147,55 @@ static int getConnectionStateOSCValue(WiFiConnectionState s) {
 
 //============================= OSC ADDRESSES ================================//
 
-static char oscAddresses[MAX_OSC_ADDRESSES][MAX_OSC_ADDRESS_LENGTH];
+// static char oscAddresses[MAX_OSC_ADDRESSES][MAX_OSC_ADDRESS_LENGTH];
 
-enum oscAddress {
-  // input messages
+// enum oscAddress {
+//   // input messages
+//   oscInputHello = 0,
+//   oscInputWiFiEnable,
+//   oscInputSetWiFi,
+//   oscInputGetWiFi,
+//   oscInputSetPorts,
+//   oscInputGetPorts,
+//   oscInputSetRange,
+//   oscInputGetRange,
+//   oscInputSetConfig,
+//   oscInputGetConfig,
+//   oscInputSetAll,
+//   oscInputGetAll,
+//   oscInputVibroPulse,
+//   oscInputVibroNow,
+//   // output messages
+//   oscOutputHello,
+//   oscOutputWiFiState,
+//   oscOutputSetWiFi,
+//   oscOutputGetWiFi,
+//   oscOutputSetPorts,
+//   oscOutputGetPorts,
+//   oscOutputSetRange,
+//   oscOutputGetRange,
+//   oscOutputSetConfig,
+//   oscOutputGetConfig,
+//   oscOutputSetAll,
+//   oscOutputGetAll,
+//   oscOutputSensors,
+//   oscOutputButton,
+//   oscOutputFrame
+// };
+
+// static void initOSCAddress(oscAddress a, const char *movuinoId, const char *path) {
+//   strcpy(oscAddresses[a], "/movuino/");
+//   strcat(oscAddresses[a], movuinoId);
+//   strcat(oscAddresses[a], path);
+// }
+
+//----------------------------------------------------------------------------//
+
+enum oscGetSet { oscGet = 0, oscSet };
+
+//----------------------------------------------------------------------------//
+
+enum inputOSCAddress {
   oscInputHello = 0,
   oscInputWiFiEnable,
   oscInputSetWiFi,
@@ -162,9 +209,25 @@ enum oscAddress {
   oscInputSetAll,
   oscInputGetAll,
   oscInputVibroPulse,
-  oscInputVibroNow,
-  // output messages
-  oscOutputHello,
+  oscInputVibroNow,  
+};
+
+#define NB_INPUT_OSC_ADDRESSES 14
+
+static char inputOSCAddresses[MAX_INPUT_OSC_ADDRESSES][MAX_OSC_ADDRESS_LENGTH];
+
+static void initInputOSCAddress(inputOSCAddress a,
+                                const char *movuinoId,
+                                const char *path) {
+  strcpy(inputOSCAddresses[a], "/movuino/");
+  strcat(inputOSCAddresses[a], movuinoId);
+  strcat(inputOSCAddresses[a], path);
+}
+
+//----------------------------------------------------------------------------//
+
+enum outputOSCAddress {
+  oscOutputHello = 0,
   oscOutputWiFiState,
   oscOutputSetWiFi,
   oscOutputGetWiFi,
@@ -176,58 +239,62 @@ enum oscAddress {
   oscOutputGetConfig,
   oscOutputSetAll,
   oscOutputGetAll,
-  oscOutputLocalIP,
   oscOutputSensors,
   oscOutputButton,
-  oscOutputFrame
-  // oscHeartBeat,
-  // oscPing,
+  oscOutputFrame  
 };
 
-static void initOSCAddress(oscAddress a, const char *movuinoId, const char *path) {
-  strcpy(oscAddresses[a], "/movuino/");
-  strcat(oscAddresses[a], movuinoId);
-  strcat(oscAddresses[a], path);
+#define NB_OUTPUT_OSC_ADDRESSES 15
+
+static char outputOSCAddresses[MAX_OUTPUT_OSC_ADDRESSES][MAX_OSC_ADDRESS_LENGTH];
+
+static void initOutputOSCAddress(outputOSCAddress a,
+                                 const char *movuinoId,
+                                 const char *path) {
+  strcpy(outputOSCAddresses[a], "/movuino/");
+  strcat(outputOSCAddresses[a], movuinoId);
+  strcat(outputOSCAddresses[a], path);
 }
+
+//============================================================================//
 
 static void initOSCAddresses(const char *movuinoId) {
   // input messages
-  strcpy(oscAddresses[oscInputHello], "/hello");
-  initOSCAddress(oscInputWiFiEnable, movuinoId, "/wifi/enable");
+  strcpy(inputOSCAddresses[oscInputHello], "/hello");
+  initInputOSCAddress(oscInputWiFiEnable, movuinoId, "/wifi/enable");
   // getters / setters
-  initOSCAddress(oscInputSetWiFi, movuinoId, "/wifi/set");
-  initOSCAddress(oscInputGetWiFi, movuinoId, "/wifi/get");
-  initOSCAddress(oscInputSetPorts, movuinoId, "/ports/set");
-  initOSCAddress(oscInputGetPorts, movuinoId, "/ports/get");
-  initOSCAddress(oscInputSetRange, movuinoId, "/range/set");
-  initOSCAddress(oscInputGetRange, movuinoId, "/range/get");
-  initOSCAddress(oscInputSetConfig, movuinoId, "/config/set");
-  initOSCAddress(oscInputGetConfig, movuinoId, "/config/get");
-  initOSCAddress(oscInputSetAll, movuinoId, "/all/set");
-  initOSCAddress(oscInputGetAll, movuinoId, "/all/get");
+  initInputOSCAddress(oscInputSetWiFi, movuinoId, "/wifi/set");
+  initInputOSCAddress(oscInputGetWiFi, movuinoId, "/wifi/get");
+  initInputOSCAddress(oscInputSetPorts, movuinoId, "/ports/set");
+  initInputOSCAddress(oscInputGetPorts, movuinoId, "/ports/get");
+  initInputOSCAddress(oscInputSetRange, movuinoId, "/range/set");
+  initInputOSCAddress(oscInputGetRange, movuinoId, "/range/get");
+  initInputOSCAddress(oscInputSetConfig, movuinoId, "/config/set");
+  initInputOSCAddress(oscInputGetConfig, movuinoId, "/config/get");
+  initInputOSCAddress(oscInputSetAll, movuinoId, "/all/set");
+  initInputOSCAddress(oscInputGetAll, movuinoId, "/all/get");
   // control
-  initOSCAddress(oscInputVibroPulse, movuinoId, "/vibroPulse");
-  initOSCAddress(oscInputVibroNow, movuinoId, "/vibroNow");
+  initInputOSCAddress(oscInputVibroPulse, movuinoId, "/vibroPulse");
+  initInputOSCAddress(oscInputVibroNow, movuinoId, "/vibroNow");
 
   // output messages
-  strcpy(oscAddresses[oscOutputHello], "/hello");
-  initOSCAddress(oscOutputWiFiState, movuinoId, "/wifi/state"); // serial, trigger (sysex) => wifi state : 0 (disconnected), 1 (connected), 2 (connecting)
+  strcpy(outputOSCAddresses[oscOutputHello], "/hello");
+  initOutputOSCAddress(oscOutputWiFiState, movuinoId, "/wifi/state");
   // acks for getters / setters
-  initOSCAddress(oscOutputSetWiFi, movuinoId, "/wifi/set");
-  initOSCAddress(oscOutputGetWiFi, movuinoId, "/wifi/get");
-  initOSCAddress(oscOutputSetPorts, movuinoId, "/ports/set");
-  initOSCAddress(oscOutputGetPorts, movuinoId, "/ports/get");
-  initOSCAddress(oscOutputSetRange, movuinoId, "/range/set");
-  initOSCAddress(oscOutputGetRange, movuinoId, "/range/get");
-  initOSCAddress(oscOutputSetConfig, movuinoId, "/config/set");
-  initOSCAddress(oscOutputGetConfig, movuinoId, "/config/get");
-  initOSCAddress(oscOutputSetAll, movuinoId, "/all/set");
-  initOSCAddress(oscOutputGetAll, movuinoId, "/all/get");
+  initOutputOSCAddress(oscOutputSetWiFi, movuinoId, "/wifi/set");
+  initOutputOSCAddress(oscOutputGetWiFi, movuinoId, "/wifi/get");
+  initOutputOSCAddress(oscOutputSetPorts, movuinoId, "/ports/set");
+  initOutputOSCAddress(oscOutputGetPorts, movuinoId, "/ports/get");
+  initOutputOSCAddress(oscOutputSetRange, movuinoId, "/range/set");
+  initOutputOSCAddress(oscOutputGetRange, movuinoId, "/range/get");
+  initOutputOSCAddress(oscOutputSetConfig, movuinoId, "/config/set");
+  initOutputOSCAddress(oscOutputGetConfig, movuinoId, "/config/get");
+  initOutputOSCAddress(oscOutputSetAll, movuinoId, "/all/set");
+  initOutputOSCAddress(oscOutputGetAll, movuinoId, "/all/get");
   // actual data
-  // initOSCAddress(oscOutputLocalIP, movuinoId, "/localIP"); // all, trigger (sysex) => String
-  initOSCAddress(oscOutputSensors, movuinoId, "/sensors"); // all, flow => ax, ay, az, gx, gy, gz, mx, my, mz, btn
-  initOSCAddress(oscOutputButton, movuinoId, "/button"); // all, trigger (sysex) => 0 (off), 1 (on), 2 (hold)
-  initOSCAddress(oscOutputFrame, movuinoId, "/frame"); // contains sensors, button, vibrating, ip (12 values)
+  initOutputOSCAddress(oscOutputSensors, movuinoId, "/sensors");
+  initOutputOSCAddress(oscOutputButton, movuinoId, "/button");
+  initOutputOSCAddress(oscOutputFrame, movuinoId, "/frame");
 }
 
 #endif /* _MOVUINO_FIRMWARE_GLOBALS_H_ */

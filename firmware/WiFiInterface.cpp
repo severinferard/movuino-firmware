@@ -53,17 +53,18 @@ WiFiInterface::stop() {
 
 void
 WiFiInterface::readMessages() {
-  OSCMessage msg;
   int packetSize = udp.parsePacket();
   if (packetSize > 0) {
     while (packetSize--) {
-      msg.fill(udp.read()); // read incoming message into the bundle
+      inputOSCMessage.fill(udp.read()); // read incoming message into the bundle
     }
-    if (!msg.hasError()) {
-      router->routeWiFiMessage(msg);
+    if (!inputOSCMessage.hasError()) {
+      router->routeWiFiMessage(inputOSCMessage);
     } else {
-      router->wiFiMessageErrorCallback(msg);
+      router->wiFiMessageErrorCallback(inputOSCMessage);
     }
+
+    inputOSCMessage.empty();
   }
 }
 

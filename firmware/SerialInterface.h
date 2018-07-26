@@ -16,6 +16,8 @@ private:
   Config *config;
   Router *router;
 
+  OSCMessage inputOSCMessage;
+
 public:
   SerialInterface() {
     slip = new SLIPEncodedSerial(Serial);

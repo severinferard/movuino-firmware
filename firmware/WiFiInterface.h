@@ -38,7 +38,8 @@ private:
   Config *config;
   Router *router;
 
-
+  OSCMessage inputOSCMessage;
+  
 public:
   WiFiInterface(unsigned long blinkPeriod = LOW_BLINK_PERIOD,
                 unsigned long timeout = WIFI_CONNECTION_TIMEOUT) :

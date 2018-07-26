@@ -18,20 +18,21 @@ SerialInterface::update() {
 void
 SerialInterface::readMessages(/*Router *router*/) {
   if (slip->available() > 0) {
-    OSCMessage msg;
     int size;
 
     while (!slip->endofPacket()) {
       if ((size = slip->available()) > 0) {
         while (size--) {
-          msg.fill(slip->read());
+          inputOSCMessage.fill(slip->read());
         }
       }
     }
 
-    if (!msg.hasError()) {
-      router->routeSerialMessage(msg);        
+    if (!inputOSCMessage.hasError()) {
+      router->routeSerialMessage(inputOSCMessage);        
     }
+
+    inputOSCMessage.empty();
   }
 }
 
