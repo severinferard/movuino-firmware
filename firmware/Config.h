@@ -15,6 +15,7 @@ private:
   char movuinoId[MAX_CONFIG_STRING_SIZE];
   char firmwareVersion[MAX_CONFIG_STRING_SIZE];
 
+  char userId[MAX_CONFIG_STRING_SIZE];
   char ssid[MAX_CONFIG_STRING_SIZE];
   char password[MAX_CONFIG_STRING_SIZE];
   char hostIP[MAX_CONFIG_STRING_SIZE];
@@ -28,8 +29,9 @@ private:
   // serial comm is never really disabled
   bool useWiFi;
   bool useSerial;
-  bool sendSingleFrame;
+  // bool sendSingleFrame;
   // for sensors
+  bool readMag;
   int readMagPeriod;
   int outputFramePeriod;
   int buttonHoldDuration;
@@ -45,13 +47,15 @@ public:
   gyroRange(DEFAULT_GYRO_RANGE),
   useWiFi(DEFAULT_USE_WIFI),
   useSerial(DEFAULT_USE_SERIAL),
-  sendSingleFrame(DEFAULT_SEND_SINGLE_FRAME),
+  // sendSingleFrame(DEFAULT_SEND_SINGLE_FRAME),
+  readMag(DEFAULT_READ_MAG),
   readMagPeriod(DEFAULT_READ_MAG_PERIOD),
   outputFramePeriod(DEFAULT_OUTPUT_FRAME_PERIOD),
   buttonHoldDuration(DEFAULT_BUTTON_HOLD_DURATION) {
     strcpy(initialized, "uninitialized");
     strcpy(movuinoId, "");
     strcpy(firmwareVersion, "");
+    strcpy(userId, "1");
     strcpy(ssid, DEFAULT_NETWORK_SSID);
     strcpy(password, DEFAULT_NETWORK_PASSWORD);
     strcpy(hostIP, DEFAULT_HOST_IP);
@@ -72,6 +76,9 @@ public:
 
   const char *getMovuinoId();
   const char *getFirmwareVersion();
+
+  const char *getUserId();
+  void setUserId(const char *id);
 
   bool getUseWiFi();
   void setUseWiFi(bool b);
@@ -100,8 +107,11 @@ public:
   bool getUseSerial();
   void setUseSerial(bool b);
 
-  bool getSendSingleFrame();
-  void setSendSingleFrame(bool b);
+  // bool getSendSingleFrame();
+  // void setSendSingleFrame(bool b);
+
+  bool getReadMag();
+  void setReadMag(bool b);
 
   int getReadMagPeriod();
   void setReadMagPeriod(int p);

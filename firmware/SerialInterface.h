@@ -1,6 +1,9 @@
 #ifndef _MOVUINO_FIRMWARE_SERIALINTERFACE_H_
 #define _MOVUINO_FIRMWARE_SERIALINTERFACE_H_
 
+#define PAULSSUGGESTION
+#define MAX_SERIAL_COMMAND_LENGTH 20
+
 #include <Arduino.h>
 #include <SLIPEncodedSerial.h>
 #include <SLIPEncodedUSBSerial.h>
@@ -30,7 +33,7 @@ public:
   void init(Config *c, Router *r);
   void update();
 
-  void readMessages(/*Router *router*/);
+  void readMessages();
   bool sendMessage(OSCMessage& msg);
 };
 

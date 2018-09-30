@@ -61,9 +61,9 @@ private:
   int16_t gx, gy, gz;
   int16_t mx, my, mz;
   float values[9];
+  bool readMag;
   int magRange[6];// = {666, -666, 666, -666, 666, -666}; // magneto range values for calibration
   uint8_t magBuffer[14]; // for synchronous reading
-
 
   Config *config;
   Router *router;
@@ -88,12 +88,14 @@ public:
   int getGyroRange();
   void setGyroRange(int r);
 
+  void setReadMag(bool b);
   void setReadMagPeriod(int p);
   void setOutputFramePeriod(int p);
 
 private:
   // use either synchronous read with this method, or MagTimer
   // void readMagValues(); // => getMotion9 is used instead
+  void readMagValues();
 
   // only executed by friend class MagTimer
   void setRawMagValues(uint16_t x, uint16_t y, uint16_t z);

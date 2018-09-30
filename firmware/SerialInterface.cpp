@@ -2,6 +2,11 @@
 #include "Router.h"
 #include "SerialInterface.h"
 
+#define START_SERIAL_MESSAGE_HEADER 2
+#define START_SERIAL_MESSAGE_DATA 2
+#define SERIAL_MESSAGE_SEPARATOR 2
+#define END_SERIAL_MESSAGE 3
+
 void
 SerialInterface::init(Config *c, Router *r) {
   config = c;
@@ -16,7 +21,7 @@ SerialInterface::update() {
 }
 
 void
-SerialInterface::readMessages(/*Router *router*/) {
+SerialInterface::readMessages() {
   if (slip->available() > 0) {
     int size;
 

@@ -2,7 +2,6 @@
 #include "Config.h"
 #include "WiFiInterface.h"
 
-
 void
 WiFiInterface::init(Config *c, Router *r) {
   config = c;

@@ -117,6 +117,13 @@ AccessPoint::encodeAndSendSettings(uint8_t num, bool broadcast) {
 
   strcpy(packet, "settings\n");
 
+  strcat(packet, config->getUserId());
+  strcat(packet, "\n");
+
+  intStr = String(config->getUseWiFi());
+  strcat(packet, intStr.c_str());
+  strcat(packet, "\n");
+
   strcat(packet, config->getSsid());
   strcat(packet, "\n");
   strcat(packet, config->getPassword());
@@ -138,25 +145,19 @@ AccessPoint::encodeAndSendSettings(uint8_t num, bool broadcast) {
   strcat(packet, intStr.c_str());
   strcat(packet, "\n");
 
-  intStr = String(config->getUseWiFi());
-  strcat(packet, intStr.c_str());
-  strcat(packet, "\n");
   intStr = String(config->getUseSerial());
   strcat(packet, intStr.c_str());
   strcat(packet, "\n");
-  intStr = String(config->getSendSingleFrame());
-  strcat(packet, intStr.c_str());
-  strcat(packet, "\n");
-
-  intStr = String(config->getReadMagPeriod());
+  
+  intStr = String(config->getReadMag());
   strcat(packet, intStr.c_str());
   strcat(packet, "\n");
   intStr = String(config->getOutputFramePeriod());
   strcat(packet, intStr.c_str());
   strcat(packet, "\n");
-  intStr = String(config->getButtonHoldDuration());
-  strcat(packet, intStr.c_str());
-  strcat(packet, "\n");
+  // intStr = String(config->getButtonHoldDuration());
+  // strcat(packet, intStr.c_str());
+  // strcat(packet, "\n");
 
   strcat(packet, config->getMovuinoId());
   strcat(packet, "\n");
@@ -212,19 +213,19 @@ AccessPoint::processInputMessage() {
       config->store();
       encodeAndSendSettings(0, true); // refresh page
     } else if (msg[0] == "settings" && msgLength >= 14) {
-      config->setSsid(msg[1].c_str());
-      config->setPassword(msg[2].c_str());
-      config->setHostIP(msg[3].c_str());
-      config->setInputPort(msg[4].toInt());
-      config->setOutputPort(msg[5].toInt());
-      config->setAccelRange(msg[6].toInt());
-      config->setGyroRange(msg[7].toInt());
-      config->setUseWiFi(msg[8].toInt() > 0);
-      config->setUseSerial(msg[9].toInt() > 0);
-      config->setSendSingleFrame(msg[10].toInt() > 0);
-      config->setReadMagPeriod(msg[11].toInt());
+      config->setUserId(msg[1].c_str());
+      config->setUseWiFi(msg[2].toInt() > 0);
+      config->setSsid(msg[3].c_str());
+      config->setPassword(msg[4].c_str());
+      config->setHostIP(msg[5].c_str());
+      config->setInputPort(msg[6].toInt());
+      config->setOutputPort(msg[7].toInt());
+      config->setAccelRange(msg[8].toInt());
+      config->setGyroRange(msg[9].toInt());
+      config->setUseSerial(msg[10].toInt() > 0);
+      config->setReadMag(msg[11].toInt() > 0);
       config->setOutputFramePeriod(msg[12].toInt());
-      config->setButtonHoldDuration(msg[13].toInt());
+      // config->setButtonHoldDuration(msg[13].toInt());
       config->store();
     } else {
       // ... something else needed ?

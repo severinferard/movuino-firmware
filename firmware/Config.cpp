@@ -38,6 +38,7 @@ Config::load() {
   if (file && fExists) {
     String _initialized = file.readStringUntil('\n');
 
+    String _userId = file.readStringUntil('\n');
     String _ssid = file.readStringUntil('\n');
     String _password = file.readStringUntil('\n');
     String _hostIP = file.readStringUntil('\n');
@@ -50,13 +51,15 @@ Config::load() {
 
     useWiFi = file.readStringUntil('\n').toInt() > 0;
     useSerial = file.readStringUntil('\n').toInt() > 0;
-    sendSingleFrame = file.readStringUntil('\n').toInt() > 0;
+    // sendSingleFrame = file.readStringUntil('\n').toInt() > 0;
 
+    readMag = file.readStringUntil('\n').toInt() > 0;
     readMagPeriod = file.readStringUntil('\n').toInt();
     outputFramePeriod = file.readStringUntil('\n').toInt();
     buttonHoldDuration = file.readStringUntil('\n').toInt();
 
     _initialized.toCharArray(initialized, _initialized.length());
+    _userId.toCharArray(userId, _userId.length());
     _ssid.toCharArray(ssid, _ssid.length());
     _password.toCharArray(password, _password.length());
     _hostIP.toCharArray(hostIP, _hostIP.length());
@@ -107,6 +110,7 @@ Config::store() {
 
     file.println(initialized);
 
+    file.println(userId);
     file.println(ssid);
     file.println(password);
     file.println(hostIP);
@@ -118,7 +122,8 @@ Config::store() {
 
     file.println(useWiFi ? "1" : "0");
     file.println(useSerial ? "1" : "0");
-    file.println(sendSingleFrame ? "1" : "0");
+    // file.println(sendSingleFrame ? "1" : "0");
+    file.println(readMag ? "1" : "0");
     file.println(readMagPeriod);
     file.println(outputFramePeriod);
     file.println(buttonHoldDuration);
@@ -166,7 +171,8 @@ Config::reset() {
   setGyroRange(DEFAULT_GYRO_RANGE);
   setUseWiFi(DEFAULT_USE_WIFI);
   setUseSerial(DEFAULT_USE_SERIAL);
-  setSendSingleFrame(DEFAULT_SEND_SINGLE_FRAME);
+  // setSendSingleFrame(DEFAULT_SEND_SINGLE_FRAME);
+  setReadMag(DEFAULT_READ_MAG);
   setReadMagPeriod(DEFAULT_READ_MAG_PERIOD);
   setOutputFramePeriod(DEFAULT_OUTPUT_FRAME_PERIOD);
   setButtonHoldDuration(DEFAULT_BUTTON_HOLD_DURATION);
@@ -186,6 +192,16 @@ Config::reset() {
 
 //========================= GETTERS AND SETTERS ==============================//
 
+bool
+Config::getInitialized() {
+  return strcmp(initialized, "initialized") == 0;
+}
+
+void
+Config::setInitialized(bool b) {
+  strcpy(initialized, b ? "initialized" : "uninitialized");
+}
+
 const char *
 Config::getMovuinoId() {
   return movuinoId;
@@ -196,14 +212,14 @@ Config::getFirmwareVersion() {
   return firmwareVersion;
 }
 
-bool
-Config::getInitialized() {
-  return strcmp(initialized, "initialized") == 0;
+const char *
+Config::getUserId() {
+  return userId;
 }
 
 void
-Config::setInitialized(bool b) {
-  strcpy(initialized, b ? "initialized" : "uninitialized");
+Config::setUserId(const char *id) {
+  strcpy(userId, id);
 }
 
 ////////// WIFI SETTINGS
@@ -320,14 +336,24 @@ Config::setUseSerial(bool b) {
   useSerial = b;
 }
 
+// bool
+// Config::getSendSingleFrame() {
+//   return sendSingleFrame;
+// }
+
+// void
+// Config::setSendSingleFrame(bool b) {
+//   sendSingleFrame = b;
+// }
+
 bool
-Config::getSendSingleFrame() {
-  return sendSingleFrame;
+Config::getReadMag() {
+  return readMag;
 }
 
 void
-Config::setSendSingleFrame(bool b) {
-  sendSingleFrame = b;
+Config::setReadMag(bool b) {
+  readMag = b;
 }
 
 int

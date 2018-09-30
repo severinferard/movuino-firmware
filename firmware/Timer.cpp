@@ -56,7 +56,7 @@ Timer::update() {
   // }
 
   // dumber version :
-  // seems to work good enough in case there are problems with the version above
+  // seems to work well enough in case there are problems with the version above
 
   if (now >= lastDate + period) {
     lastDate = now;

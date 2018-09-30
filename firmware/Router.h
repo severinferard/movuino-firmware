@@ -20,7 +20,7 @@ private:
   SerialInterface *serial;
   WiFiInterface *wifi;
 
-  OSCMessage *outputOSCMessages[NB_OUTPUT_OSC_ADDRESSES]; // nb of output OSC messages
+  OSCMessage *oscMessages[nbOscAddresses]; // nb of output OSC messages
 
 public:
   Router() {}
@@ -46,12 +46,13 @@ private:
   void routeOSCMessage(OSCMessage& msg);
 
   void sayHello();
-
+  void sendUserId(oscGetSet getSet);
   void sendWiFiConnectionMessage(int i);
   void sendWiFiSettings(oscGetSet getSet);
   void sendPorts(oscGetSet getSet);
   void sendAccelGyroRanges(oscGetSet getSet);
-  void sendGlobalConfig(oscGetSet getSet);
+  // void sendGlobalConfig(oscGetSet getSet);
+  void sendOutputFramePeriod(oscGetSet getSet);
 
   void sendButtonMessage(int i);
   void sendSensorsMessage(float *f);

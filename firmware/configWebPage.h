@@ -44,6 +44,8 @@ static const char configWebPage[] PROGMEM = R"=====(
   </style>
   <script type=text/javascript>
   window.onload = function() {
+    var $userid = document.getElementById('userid');
+    var $useWiFi = document.getElementById('useWiFi');
     var $ssid = document.getElementById('ssid');
     var $password = document.getElementById('password');
     var $hostip1 = document.getElementById('hostip1');
@@ -54,12 +56,9 @@ static const char configWebPage[] PROGMEM = R"=====(
     var $outputPort = document.getElementById('outputPort');
     var $accelRange = document.getElementById('accelRange');
     var $gyroRange = document.getElementById('gyroRange');
-    var $useWiFi = document.getElementById('useWiFi');
     var $useSerial = document.getElementById('useSerial');
-    var $sendSingleFrame = document.getElementById('sendSingleFrame');
-    var $readMagPeriod = document.getElementById('readMagPeriod');
+    var $readMag = document.getElementById('readMag');
     var $outputFramePeriod = document.getElementById('outputFramePeriod');
-    var $buttonHoldDuration = document.getElementById('buttonHoldDuration');
 
     function getRadioValue($radio) {
       var fd = new FormData($radio);
@@ -74,10 +73,12 @@ static const char configWebPage[] PROGMEM = R"=====(
       var args = e.data.split('\n');
       console.log(e.data);
       if (args[0] === 'settings') {
-        $ssid.value = args[1];
-        $password.value = args[2];
+        $userid.value = args[1];
+        $useWiFi.checked = parseInt(args[2]) != 0;
+        $ssid.value = args[3];
+        $password.value = args[4];
 
-        var ip = args[3].split('.');
+        var ip = args[5].split('.');
         if (ip.length !== 4) {
           ip = [0, 0, 0, 0];
         }
@@ -90,31 +91,26 @@ static const char configWebPage[] PROGMEM = R"=====(
         arg = parseInt(ip[3]);
         $hostip4.value = (!isNaN(arg) && arg >= 0) ? arg: 0;
 
-        arg = parseInt(args[4]);
+        arg = parseInt(args[6]);
         $inputPort.value = (!isNaN(arg) && arg >= 0) ? arg : 0;
-        arg = parseInt(args[5]);
+        arg = parseInt(args[7]);
         $outputPort.value = (!isNaN(arg) && arg >= 0) ? arg : 0;
 
-        arg = parseInt(args[6]);
+        arg = parseInt(args[8]);
         arg = isNaN(arg) ? 0 : (arg < 0 ? 0 : (arg > 3 ? 3 : arg));
         document.querySelector('#accelRange' + arg).checked = true;
 
-        arg = parseInt(args[7]);
+        arg = parseInt(args[9]);
         arg = isNaN(arg) ? 0 : (arg < 0 ? 0 : (arg > 3 ? 3 : arg));
         document.querySelector('#gyroRange' + arg).checked = true;
 
-        $useWiFi.checked = parseInt(args[8]) != 0;
-        $useSerial.checked = parseInt(args[9]) != 0;
-        $sendSingleFrame.checked = parseInt(args[10]) != 0;
+        $useSerial.checked = parseInt(args[10]) != 0;
+        $readMag.checked = parseInt(args[11]) != 0;
 
-        arg = parseInt(args[11]);
-        $readMagPeriod.value = (!isNaN(arg) && arg >= 0) ? arg : 0;
         arg = parseInt(args[12]);
         $outputFramePeriod.value = (!isNaN(arg) && arg >= 0) ? arg : 0;
-        arg = parseInt(args[13]);
-        $buttonHoldDuration.value = (!isNaN(arg) && arg >= 0) ? arg : 0;
 
-        var fullId = `${args[15]}@${args[14]}`;
+        var fullId = `${args[13]}@${args[14]}`;
         document.getElementById('version').innerHTML = fullId;
       }
     };
@@ -122,17 +118,16 @@ static const char configWebPage[] PROGMEM = R"=====(
     var $updateBtn = document.getElementById('updateBtn');
     $updateBtn.addEventListener('click', function() {
       var settings = 'settings\n';
+      settings += `${$userid.value}\n`;
+      settings += $useWiFi.checked ? '1\n' : '0\n';
       settings += `${$ssid.value}\n${$password.value}\n`;
       settings += `${$hostip1.value}.${$hostip2.value}.${$hostip3.value}.${$hostip4.value}\n`;
       settings += `${$inputPort.value}\n${$outputPort.value}\n`;
       settings += `${getRadioValue($accelRange)}\n`;
       settings += `${getRadioValue($gyroRange)}\n`;
-      settings += $useWiFi.checked ? '1\n' : '0\n';
       settings += $useSerial.checked ? '1\n' : '0\n';
-      settings += $sendSingleFrame.checked ? '1\n' : '0\n';
-      settings += `${$readMagPeriod.value}\n`;
+      settings += $readMag.checked ? '1\n' : '0\n';
       settings += `${$outputFramePeriod.value}\n`;
-      settings += `${$buttonHoldDuration.value}\n`;
       console.log(settings);
       connection.send(settings);
     });
@@ -164,6 +159,8 @@ static const char configWebPage[] PROGMEM = R"=====(
     </div>
 
     <div id=settings>
+      <label>movuino id <input type=text id=userid></label>
+      <label><input type=checkbox id=useWiFi> enable WiFi on boot</label>
       <label>network ssid <input type=text id=ssid></label>
       <label>network password <input type=password id=password></label>
       <label>
@@ -195,12 +192,9 @@ static const char configWebPage[] PROGMEM = R"=====(
           <label><input type=radio id=gyroRange3 name=gyroRange value=3> +/- 2000 deg/sec</label>
         </form>
       </label>
-      <label><input type=checkbox id=useWiFi> enable WiFi on boot</label>
-      <label><input type=checkbox id=useSerial> use Serial</label>
-      <label><input type=checkbox id=sendSingleFrame> send single frame</label>
-      <label>read magnetometer period (ms) <input type=number id=readMagPeriod></label>
+      <label><input type=checkbox id=useSerial> enable serial communication</label>
+      <label><input type=checkbox id=readMag> enable magnetometer</label>
       <label>output frame period (ms) <input type=number id=outputFramePeriod></label>
-      <label>button hold duration (ms) <input type=number id=buttonHoldDuration></label>
       <div id=btn-container>
         <button id=updateBtn>save</button>
         <button id=clearBtn>clear</button>

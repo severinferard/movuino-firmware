@@ -19,11 +19,9 @@ MagTimer::callback() {
   if (readMagState == 0) {
     // set i2c bypass enable pin to true to access magnetometer
     I2Cdev::writeByte(MPU6050_DEFAULT_ADDRESS, MPU6050_RA_INT_PIN_CFG, 0x02);
-    readMagState = 1;
   } else if (readMagState == 1) {
     // enable the magnetometer
     I2Cdev::writeByte(MPU9150_RA_MAG_ADDRESS, 0x0A, 0x01);
-    readMagState = 2;
   } else {
     // read it !
     I2Cdev::readBytes(MPU9150_RA_MAG_ADDRESS, MPU9150_RA_MAG_XOUT_L, 6, magBuffer);
@@ -32,14 +30,14 @@ MagTimer::callback() {
     uint16_t mz = (((int16_t)magBuffer[5]) << 8) | magBuffer[4];
 
     sensors->setRawMagValues(mx, my, mz);
-    readMagState = 0;
 
     // reset i2c bypass enable pin as soon as we are done
     // therefore it take a total of (2 * timer period) to read new magnetometer values
     // callback();
-
     // or if we don't call callback here, a total of (3 * timer period)
   }
+
+  readMagState = (readMagState + 1) % 3;
 }
 
 void
@@ -57,11 +55,18 @@ Sensors::init(Config *c, Router *r) {
   mpu.initialize();
   setAccelRange(config->getAccelRange());
   setGyroRange(config->getGyroRange());
+  setReadMag(config->getReadMag());
+  
+  for (unsigned int i = 0; i < 3; ++i) {
+    magRange[i * 2] = 666;
+    magRange[i * 2 + 1] = -666;
+  }
 
   if (MOVUINO_READ_MAG_ASYNC) {
-    readMagTimer->setPeriod(config->getReadMagPeriod());
+    // readMagTimer->setPeriod(config->getReadMagPeriod());
+    readMagTimer->setPeriod(DEFAULT_READ_MAG_PERIOD);
     oscOutTimer->setPeriod(config->getOutputFramePeriod());
-
+    
     readMagTimer->start();
     oscOutTimer->start();
   }
@@ -73,13 +78,19 @@ Sensors::update() {
     mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
     updateAccelGyroValues();
     
-    readMagTimer->update();
+    if (config->getReadMag()) {
+      readMagTimer->update();
+    }
+    
     oscOutTimer->update();
   } else {
-    // readMagValues();
-    mpu.getMotion9(&ax, &ay, &az, &gx, &gy, &gz, &mx, &my, &mz);
+    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
     updateAccelGyroValues();
-    updateMagValues();
+
+    if (config->getReadMag()) {
+      readMagValues();
+      updateMagValues();
+    }
 
     sendSensorValues();
   }
@@ -108,6 +119,15 @@ Sensors::setGyroRange(int r) {
 }
 
 void
+Sensors::setReadMag(bool b) {
+  readMag = b;
+
+  if (!readMag) {
+    mx = my = mz = 0;
+  }
+}
+
+void
 Sensors::setReadMagPeriod(int p) {
   readMagTimer->setPeriod(p);
 }
@@ -121,7 +141,7 @@ Sensors::setOutputFramePeriod(int p) {
 
 // original readMag method, to allow  synchronous reading
 // (Timers must be off and sendSensorValues must be called explicitly)
-/*
+//*
 void
 Sensors::readMagValues() {
   // set i2c bypass enable pin to true to access magnetometer
