@@ -4,40 +4,16 @@
 #include "Router.h"
 #include "Sensors.h"
 
-//================================= TIMER ====================================//
+//================================ TIMERS ====================================//
 
-/**
- * adapted to be non blocking using a state flag
- * from the original sparkun / Jeff Rowberg MPU6050 library:
- * MPU6050::getMag(int16_t *mx, int16_t *my, int16_t *mz)
- * there used to be delay(10)'s between calls to writeByte and readBytes,
- * this function is now called in a non-blocking loop (a period of 10 ms works fine)
- * and keeps its own state up to date.
- */
 void
 MagTimer::callback() {
-  if (readMagState == 0) {
-    // set i2c bypass enable pin to true to access magnetometer
-    I2Cdev::writeByte(MPU6050_DEFAULT_ADDRESS, MPU6050_RA_INT_PIN_CFG, 0x02);
-  } else if (readMagState == 1) {
-    // enable the magnetometer
-    I2Cdev::writeByte(MPU9150_RA_MAG_ADDRESS, 0x0A, 0x01);
-  } else {
-    // read it !
-    I2Cdev::readBytes(MPU9150_RA_MAG_ADDRESS, MPU9150_RA_MAG_XOUT_L, 6, magBuffer);
-    uint16_t mx = (((int16_t)magBuffer[1]) << 8) | magBuffer[0];
-    uint16_t my = (((int16_t)magBuffer[3]) << 8) | magBuffer[2];
-    uint16_t mz = (((int16_t)magBuffer[5]) << 8) | magBuffer[4];
+  sensors->readMagValuesAsync();
+}
 
-    sensors->setRawMagValues(mx, my, mz);
-
-    // reset i2c bypass enable pin as soon as we are done
-    // therefore it take a total of (2 * timer period) to read new magnetometer values
-    // callback();
-    // or if we don't call callback here, a total of (3 * timer period)
-  }
-
-  readMagState = (readMagState + 1) % 3;
+void
+AccelGyroTimer::callback() {
+  sensors->readAccelGyroValues();
 }
 
 void
@@ -55,7 +31,6 @@ Sensors::init(Config *c, Router *r) {
   mpu.initialize();
   setAccelRange(config->getAccelRange());
   setGyroRange(config->getGyroRange());
-  setReadMag(config->getReadMag());
   
   for (unsigned int i = 0; i < 3; ++i) {
     magRange[i * 2] = 666;
@@ -63,10 +38,11 @@ Sensors::init(Config *c, Router *r) {
   }
 
   if (MOVUINO_READ_MAG_ASYNC) {
-    // readMagTimer->setPeriod(config->getReadMagPeriod());
+    readAccelGyroTimer->setPeriod(config->getOutputFramePeriod());
     readMagTimer->setPeriod(DEFAULT_READ_MAG_PERIOD);
     oscOutTimer->setPeriod(config->getOutputFramePeriod());
     
+    readAccelGyroTimer->start();
     readMagTimer->start();
     oscOutTimer->start();
   }
@@ -74,22 +50,20 @@ Sensors::init(Config *c, Router *r) {
 
 void
 Sensors::update() {
-  if (MOVUINO_READ_MAG_ASYNC) {
-    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    updateAccelGyroValues();
-    
-    if (config->getReadMag()) {
-      readMagTimer->update();
-    }
+  if (MOVUINO_READ_MAG_ASYNC) { // THIS IS THE ONE USED
+    readAccelGyroTimer->update();
+    readMagTimer->update();
+
+    // if (config->getReadMag()) {
+    //   readMagTimer->update();
+    // }
     
     oscOutTimer->update();
-  } else {
-    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-    updateAccelGyroValues();
+  } else { // THIS DOESN'T MAKE MUCH SENSE ANYMORE ...
+    readAccelGyroValues();
 
     if (config->getReadMag()) {
-      readMagValues();
-      updateMagValues();
+      readMagValuesSync();
     }
 
     sendSensorValues();
@@ -119,21 +93,13 @@ Sensors::setGyroRange(int r) {
 }
 
 void
-Sensors::setReadMag(bool b) {
-  readMag = b;
-
-  if (!readMag) {
-    mx = my = mz = 0;
-  }
-}
-
-void
 Sensors::setReadMagPeriod(int p) {
   readMagTimer->setPeriod(p);
 }
 
 void
 Sensors::setOutputFramePeriod(int p) {
+  readAccelGyroTimer->setPeriod(p);
   oscOutTimer->setPeriod(p);
 }
 
@@ -141,9 +107,8 @@ Sensors::setOutputFramePeriod(int p) {
 
 // original readMag method, to allow  synchronous reading
 // (Timers must be off and sendSensorValues must be called explicitly)
-//*
 void
-Sensors::readMagValues() {
+Sensors::readMagValuesSync() {
   // set i2c bypass enable pin to true to access magnetometer
   I2Cdev::writeByte(MPU6050_DEFAULT_ADDRESS, MPU6050_RA_INT_PIN_CFG, 0x02);
   delay(10);
@@ -155,20 +120,50 @@ Sensors::readMagValues() {
   mx = (((int16_t)magBuffer[1]) << 8) | magBuffer[0];
   my = (((int16_t)magBuffer[3]) << 8) | magBuffer[2];
   mz = (((int16_t)magBuffer[5]) << 8) | magBuffer[4];
-
   updateMagValues();
 }
-//*/
 
+/**
+ * adapted to be non blocking using a state flag
+ * from the original sparkun / Jeff Rowberg MPU6050 library:
+ * MPU6050::getMag(int16_t *mx, int16_t *my, int16_t *mz)
+ * there used to be delay(10)'s between calls to writeByte and readBytes,
+ * this function is now called in a non-blocking loop (a period of 10 ms works fine)
+ * and keeps its own state up to date.
+ */
 ////////// MagTimer callback :
 void
-Sensors::setRawMagValues(uint16_t x, uint16_t y, uint16_t z) {
-  mx = x;
-  my = y;
-  mz = z;
+Sensors::readMagValuesAsync() {
+  if (!config->getReadMag()) {
+    values[6] = 0;
+    values[7] = 0;
+    values[8] = 0;
+    return;
+  }
 
-  // update only on real data change
-  updateMagValues();
+  if (readMagState == 0) {
+    // set i2c bypass enable pin to true to access magnetometer
+    I2Cdev::writeByte(MPU6050_DEFAULT_ADDRESS, MPU6050_RA_INT_PIN_CFG, 0x02);
+  } else if (readMagState == 1) {
+    // enable the magnetometer
+    I2Cdev::writeByte(MPU9150_RA_MAG_ADDRESS, 0x0A, 0x01);
+  } else {
+    // read it !
+    I2Cdev::readBytes(MPU9150_RA_MAG_ADDRESS, MPU9150_RA_MAG_XOUT_L, 6, magBuffer);
+    mx = (((int16_t)magBuffer[1]) << 8) | magBuffer[0];
+    my = (((int16_t)magBuffer[3]) << 8) | magBuffer[2];
+    mz = (((int16_t)magBuffer[5]) << 8) | magBuffer[4];
+    updateMagValues();
+  }
+
+  readMagState = (readMagState + 1) % 3;
+}
+
+////////// AccelGyroTimer callback :
+void
+Sensors::readAccelGyroValues() {
+  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  updateAccelGyroValues();  
 }
 
 ////////// OSCOutTimer callback :

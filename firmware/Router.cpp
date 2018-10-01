@@ -325,7 +325,7 @@ Router::sendSingleFrame(float *f) {
 
   msg->add(config->getUserId());
 
-  for (unsigned int i = 0; i < 9; ++i) {
+  for (unsigned int i = 0; i < 9; i++) {
     msg->add(*(f + i));
   }
 

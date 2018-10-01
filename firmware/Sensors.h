@@ -9,22 +9,28 @@ class Router;
 class Sensors;
 
 //----------------------------------------------------------------------------//
-
 // child class of Timer specialized in reading magnetometer sensor values
 
 class MagTimer : public Timer {
 private:
   Sensors *sensors;
-  unsigned int readMagState;
-  uint8_t magBuffer[14]; // used for reading values from magnetometer
-
 public:
   MagTimer(Sensors *s, unsigned long period) :
-  Timer(period), sensors(s), readMagState(0) {}
-
+  Timer(period), sensors(s) {}
   virtual ~MagTimer() {}
+  virtual void callback();
+};
 
-  // reads values, then calls sensors->setRawMagValues()
+//----------------------------------------------------------------------------//
+// child class of Timer specialized in reading accel / gyro sensor values
+
+class AccelGyroTimer : public Timer {
+private:
+  Sensors *sensors;
+public:
+  AccelGyroTimer(Sensors *s, unsigned long period) :
+  Timer(period), sensors(s) {}
+  virtual ~AccelGyroTimer() {}
   virtual void callback();
 };
 
@@ -33,14 +39,10 @@ public:
 class OSCOutTimer : public Timer {
 private:
   Sensors *sensors;
-
 public:
   OSCOutTimer(Sensors *s, unsigned long period) :
   Timer(period), sensors(s) {}
-
   virtual ~OSCOutTimer() {}
-
-  // tell the sensors class to send a frame to the router
   virtual void callback();
 };
 
@@ -48,11 +50,14 @@ public:
 
 class Sensors {
   friend class MagTimer;
+  friend class AccelGyroTimer;
   friend class OSCOutTimer;
 
 private:
   // composition over inheritance !
+  unsigned int readMagState;
   MagTimer *readMagTimer;
+  AccelGyroTimer *readAccelGyroTimer;
   OSCOutTimer *oscOutTimer;
 
   MPU6050 mpu;
@@ -63,19 +68,21 @@ private:
   float values[9];
   bool readMag;
   int magRange[6];// = {666, -666, 666, -666, 666, -666}; // magneto range values for calibration
-  uint8_t magBuffer[14]; // for synchronous reading
+  uint8_t magBuffer[14];
 
   Config *config;
   Router *router;
 
 public:
-  Sensors() {
+  Sensors() : readMagState(0) {
     readMagTimer = new MagTimer(this, 10);
+    readAccelGyroTimer = new AccelGyroTimer(this, 10);
     oscOutTimer = new OSCOutTimer(this, 10);
   }
 
   ~Sensors() {
     delete readMagTimer;
+    delete readAccelGyroTimer;
     delete oscOutTimer;
   }
 
@@ -88,22 +95,22 @@ public:
   int getGyroRange();
   void setGyroRange(int r);
 
-  void setReadMag(bool b);
   void setReadMagPeriod(int p);
   void setOutputFramePeriod(int p);
 
 private:
-  // use either synchronous read with this method, or MagTimer
-  // void readMagValues(); // => getMotion9 is used instead
-  void readMagValues();
-
   // only executed by friend class MagTimer
-  void setRawMagValues(uint16_t x, uint16_t y, uint16_t z);
+  void readMagValuesAsync();
+  void readMagValuesSync(); // blocking version, not used
+
+  // only executed by friend class AccelGyroTimer  
+  void readAccelGyroValues();
+
   // only executed by friend class OSCOutTimer
   void sendSensorValues();
 
   void updateAccelGyroValues();
-  void updateMagValues(); // todo : re-enable auto calibration
+  void updateMagValues();
   void magnetometerAutoCalibration();
 };
 

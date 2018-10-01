@@ -51,11 +51,8 @@ private:
   void sendWiFiSettings(oscGetSet getSet);
   void sendPorts(oscGetSet getSet);
   void sendAccelGyroRanges(oscGetSet getSet);
-  // void sendGlobalConfig(oscGetSet getSet);
   void sendOutputFramePeriod(oscGetSet getSet);
 
-  void sendButtonMessage(int i);
-  void sendSensorsMessage(float *f);
   void sendSingleFrame(float *f);
 
   void sendWiFiMessage(OSCMessage& msg);

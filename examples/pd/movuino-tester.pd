@@ -14,39 +14,39 @@
 #X obj 34 295 * 0.5;
 #X obj 34 314 + 0.5;
 #X obj 34 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 6350 0;
+-1 -1 6439 0;
 #X obj 70 295 * 0.5;
 #X obj 70 314 + 0.5;
 #X obj 70 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 6318 0;
+-1 -1 6287 0;
 #X obj 106 295 * 0.5;
 #X obj 106 314 + 0.5;
 #X obj 106 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 6759 0;
+-1 -1 6748 0;
 #X obj 158 295 * 0.5;
 #X obj 158 314 + 0.5;
 #X obj 158 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 6350 0;
+-1 -1 6347 0;
 #X obj 194 295 * 0.5;
 #X obj 194 314 + 0.5;
 #X obj 194 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 6345 0;
+-1 -1 6360 0;
 #X obj 230 295 * 0.5;
 #X obj 230 314 + 0.5;
 #X obj 230 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 6357 0;
+-1 -1 6350 0;
 #X obj 282 295 * 0.5;
 #X obj 282 314 + 0.5;
 #X obj 282 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 9779 0;
+-1 -1 11176 0;
 #X obj 318 295 * 0.5;
 #X obj 318 314 + 0.5;
 #X obj 318 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 2476 0;
+-1 -1 7811 0;
 #X obj 354 295 * 0.5;
 #X obj 354 314 + 0.5;
 #X obj 354 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 11112 0;
+-1 -1 12383 0;
 #X obj 137 211 unpack f f f f f f f f f f f;
 #X obj 324 131 mrpeach/packOSC;
 #X obj 324 110 list trim;
@@ -63,7 +63,7 @@
 #X obj 504 76 t b b;
 #X floatatom 504 116 5 0 0 0 - - -, f 5;
 #X obj 470 57 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 1016 0;
+-1 -1 871 0;
 #X msg 740 124 ports;
 #X obj 870 253 print;
 #X msg 740 164 open \$1;
@@ -84,7 +84,7 @@
 #X obj 692 297 t b b;
 #X floatatom 692 337 5 0 0 0 - - -, f 5;
 #X obj 674 299 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
--1 -1 1300 0;
+-1 -1 1100 0;
 #X msg 818 68 /wifi/get;
 #X msg 818 87 /ports/get;
 #X msg 818 106 /range/get;
@@ -122,6 +122,9 @@
 #X obj 658 248 t a;
 #X msg 818 125 /frameperiod/get;
 #X floatatom 574 206 5 0 0 0 - - -, f 5;
+#X floatatom 581 285 5 0 0 0 - - -, f 5;
+#X obj 445 257 list split 1;
+#X obj 397 234 list split 7;
 #X connect 1 0 2 0;
 #X connect 1 1 2 1;
 #X connect 2 0 9 0;
@@ -130,8 +133,10 @@
 #X connect 6 0 5 0;
 #X connect 7 0 3 0;
 #X connect 8 0 1 0;
+#X connect 8 0 0 0;
 #X connect 8 1 4 0;
 #X connect 9 0 76 0;
+#X connect 9 0 47 0;
 #X connect 10 0 11 0;
 #X connect 11 0 12 0;
 #X connect 13 0 14 0;
@@ -196,6 +201,8 @@
 #X connect 72 0 59 0;
 #X connect 73 0 72 0;
 #X connect 76 0 77 0;
+#X connect 76 1 37 0;
+#X connect 76 1 102 0;
 #X connect 77 0 78 0;
 #X connect 78 0 79 0;
 #X connect 80 0 59 0;
@@ -217,3 +224,5 @@
 #X connect 97 0 59 0;
 #X connect 98 0 59 0;
 #X connect 99 0 95 0;
+#X connect 101 0 100 0;
+#X connect 102 1 101 0;
