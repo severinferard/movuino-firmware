@@ -107,7 +107,7 @@ The communication namespace consists in 3 addresses.
 The firmware also allows to boot in Access Point mode, and serve a configuration web page where all the settings can be modified and stored to the local configuration file. The served configuration page is stored in a static string variable in `firmware/configWebPage.h`, which is copy-pasted from `firmware/configWebPage.html`. The AP server code is defined in `firmware/AccesPoint.h` and `firmware/AccessPoint.cpp`.
 
 <div style="text-align: center;">
-<img src="https://raw.githubusercontent.com/josephlarralde/movuino-firmware/master/movuino-ap-interface.jpg">
+<img src="https://raw.githubusercontent.com/CRI-MotionLab/movuino-firmware/simpler/movuino-ap-interface.jpg">
 </div>
 
 To boot in AP mode, turn the movuino on while holding the button, and wait until the blue LED starts blinking quickly to release it.
