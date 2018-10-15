@@ -212,7 +212,7 @@ AccessPoint::processInputMessage() {
       config->reset();
       config->store();
       encodeAndSendSettings(0, true); // refresh page
-    } else if (msg[0] == "settings" && msgLength >= 14) {
+    } else if (msg[0] == "settings" && msgLength >= 13) {
       config->setUserId(msg[1].c_str());
       config->setUseWiFi(msg[2].toInt() > 0);
       config->setSsid(msg[3].c_str());
@@ -227,6 +227,7 @@ AccessPoint::processInputMessage() {
       config->setOutputFramePeriod(msg[12].toInt());
       // config->setButtonHoldDuration(msg[13].toInt());
       config->store();
+      encodeAndSendSettings(0, true);
     } else {
       // ... something else needed ?
     }
