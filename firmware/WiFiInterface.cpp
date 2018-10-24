@@ -106,6 +106,7 @@ WiFiInterface::startWiFi() {
         WiFi.forceSleepWake();
       }
 
+      udp.begin(config->getInputPort()); // start listening to udp messages
       WiFi.begin(config->getSsid(), config->getPassword());
       start(connectionTimeout); // inherited from Timer
       onConnectionEvent(WiFiConnecting);
@@ -126,6 +127,7 @@ WiFiInterface::stopWiFi() {
     WiFi.disconnect();
     WiFi.mode(WIFI_OFF);
     WiFi.forceSleepBegin();
+    udp.stop();
     delay(1);
   }
 
@@ -146,8 +148,6 @@ WiFiInterface::toggleWiFiState() {
 void
 WiFiInterface::onConnectionEvent(WiFiConnectionState s) {
   if (s == WiFiConnected) {
-    // Start server port (to receive message)
-    udp.begin(config->getInputPort());
     wifiLight = true;
     digitalWrite(pinLedWifi, LOW); // turn ON wifi led
   }
