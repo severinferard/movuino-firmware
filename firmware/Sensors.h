@@ -60,7 +60,7 @@ private:
   AccelGyroTimer *readAccelGyroTimer;
   OSCOutTimer *oscOutTimer;
 
-  MPU6050 mpu;
+  MPU6050 *mpu;
 
   int16_t ax, ay, az;
   int16_t gx, gy, gz;
@@ -78,12 +78,14 @@ public:
     readMagTimer = new MagTimer(this, 10);
     readAccelGyroTimer = new AccelGyroTimer(this, 10);
     oscOutTimer = new OSCOutTimer(this, 10);
+    mpu = new MPU6050(0x69);
   }
 
   ~Sensors() {
     delete readMagTimer;
     delete readAccelGyroTimer;
     delete oscOutTimer;
+    delete mpu;
   }
 
   void init(Config *c, Router *r); // initialize device, set ranges and start timer

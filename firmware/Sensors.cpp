@@ -28,7 +28,7 @@ Sensors::init(Config *c, Router *r) {
   config = c;
   router = r;
 
-  mpu.initialize();
+  mpu->initialize();
   setAccelRange(config->getAccelRange());
   setGyroRange(config->getGyroRange());
   
@@ -74,22 +74,22 @@ Sensors::update() {
 
 int
 Sensors::getAccelRange() {
-  return mpu.getFullScaleAccelRange();
+  return mpu->getFullScaleAccelRange();
 }
 
 void
 Sensors::setAccelRange(int r) {
-  mpu.setFullScaleAccelRange(r);
+  mpu->setFullScaleAccelRange(r);
 }
 
 int
 Sensors::getGyroRange() {
-  return mpu.getFullScaleGyroRange();
+  return mpu->getFullScaleGyroRange();
 }
 
 void
 Sensors::setGyroRange(int r) {
-  mpu.setFullScaleGyroRange(r);
+  mpu->setFullScaleGyroRange(r);
 }
 
 void
@@ -162,7 +162,7 @@ Sensors::readMagValuesAsync() {
 ////////// AccelGyroTimer callback :
 void
 Sensors::readAccelGyroValues() {
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  mpu->getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
   updateAccelGyroValues();  
 }
 

@@ -22,9 +22,9 @@
 #define DEFAULT_WEB_SERVER_PORT 80
 #define DEFAULT_WEBSOCKET_SERVER_PORT 81
 
-#define DEFAULT_NETWORK_SSID "my_network_ssid"
-#define DEFAULT_NETWORK_PASSWORD "my_network_password"
-#define DEFAULT_HOST_IP "192.168.0.100"
+#define DEFAULT_NETWORK_SSID "hssnadr"
+#define DEFAULT_NETWORK_PASSWORD "adrien666"
+#define DEFAULT_HOST_IP "192.168.43.24"
 #define DEFAULT_OSC_INPUT_PORT 7401
 #define DEFAULT_OSC_OUTPUT_PORT 7400
 
@@ -64,6 +64,7 @@ const int pinBtn = 13;     // the number of the pushbutton pin
 const int pinLedWifi = 2;  // wifi led indicator
 const int pinLedBat = 0;   // battery led indicator
 const int pinVibro = 14;   // vibrator pin
+const int pinNeoPix = 15;  // neopixel led pin
 
 //================================= ENUMS ====================================//
 
@@ -171,6 +172,7 @@ enum oscAddress {
   oscFrame,
   oscVibroPulse,
   oscVibroNow,
+  oscNeopix,
   nbOscAddresses // always keep this in the last place
 };
 
@@ -195,6 +197,7 @@ static void initOscAddresses() {
   strcpy(oscAddresses[oscFrame], "/movuino"); // both serial and wifi (out)
   strcpy(oscAddresses[oscVibroPulse], "/vibro/pulse"); // both serial and wifi (in)
   strcpy(oscAddresses[oscVibroNow], "/vibro/now"); // both serial and wifi (in)
+  strcpy(oscAddresses[oscNeopix], "/neopix"); // both serial and wifi (in)
 }
 
 #endif /* _MOVUINO_FIRMWARE_GLOBALS_H_ */

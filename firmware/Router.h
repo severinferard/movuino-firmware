@@ -8,6 +8,7 @@ class Config;
 class Button;
 class Sensors;
 class Vibrator;
+class Neopix;
 class SerialInterface;
 class WiFiInterface;
 
@@ -17,6 +18,7 @@ private:
   Button *button;
   Sensors *sensors;
   Vibrator *vibrator;
+  Neopix *neopix;
   SerialInterface *serial;
   WiFiInterface *wifi;
 
@@ -26,7 +28,7 @@ public:
   Router() {}
   ~Router() {}
 
-  void init(Config *c, Button *b, Sensors *s, Vibrator *v, SerialInterface *si, WiFiInterface *wi);
+  void init(Config *c, Button *b, Neopix *n, Sensors *s, Vibrator *v, SerialInterface *si, WiFiInterface *wi);
   void update();
 
   // CALLBACKS :
