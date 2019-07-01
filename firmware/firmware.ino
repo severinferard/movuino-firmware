@@ -2,6 +2,7 @@
 
 #include "Router.h"
 #include "Config.h"
+#include "Neopix.h"
 #include "Button.h"
 #include "Vibrator.h"
 #include "Sensors.h"
@@ -16,6 +17,7 @@ Config config;
 Button button;
 Sensors sensors;
 Vibrator vibrator;
+Neopix neopix;
 SerialInterface serial;
 WiFiInterface wifi;
 
@@ -35,7 +37,7 @@ void setup() {
     Wire.begin();
     Wire.setClock(400000);
       
-    router.init(&config, &button, &sensors, &vibrator, &serial, &wifi);
+    router.init(&config, &button, &neopix, &sensors, &vibrator, &serial, &wifi);
   } else {
     ap = new AccessPoint();
     ap->init(&config);

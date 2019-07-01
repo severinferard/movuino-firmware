@@ -2,12 +2,13 @@
 #include "Button.h"
 #include "Sensors.h"
 #include "Vibrator.h"
+#include "Neopix.h"
 #include "SerialInterface.h"
 #include "WiFiInterface.h"
 #include "Router.h"
 
 void
-Router::init(Config *c, Button *b, Sensors *s, Vibrator *v, SerialInterface *si, WiFiInterface *wi) {
+Router::init(Config *c, Button *b, Neopix *n, Sensors *s, Vibrator *v, SerialInterface *si, WiFiInterface *wi) {
   config = c;
   config->init();
   config->load(); // read from file if exists, otherwise use default values
@@ -21,6 +22,9 @@ Router::init(Config *c, Button *b, Sensors *s, Vibrator *v, SerialInterface *si,
 
   button = b;
   button->init(config, this);
+
+  neopix = n;
+  neopix->init(config, this);
 
   sensors = s;
   sensors->init(config, this);
@@ -40,6 +44,7 @@ Router::update() {
   serial->update();
   wifi->update();
   vibrator->update();
+  neopix->update();
   button->update();
   sensors->update();
 }
@@ -49,9 +54,10 @@ Router::routeWiFiMessage(OSCMessage& msg) {
   char address[MAX_OSC_ADDRESS_LENGTH];
   msg.getAddress(address);
 
-  // route only incoming vibrator control messages
+  // route only incoming control messages
   if (strcmp(address, oscAddresses[oscVibroNow]) == 0 ||
-      strcmp(address, oscAddresses[oscVibroPulse]) == 0) {
+      strcmp(address, oscAddresses[oscVibroPulse]) == 0||
+      strcmp(address, oscAddresses[oscNeopix]) == 0) {
     routeOSCMessage(msg);
   }
 }
@@ -229,13 +235,20 @@ Router::routeOSCMessage(OSCMessage& msg) {
   //----------------------------------------------------------------------------
   } else if (strcmp(address, oscAddresses[oscVibroPulse]) == 0 && msgLength > 2) {
     vibrator->pulse(
-      (unsigned long) msg.getInt(0),
-      (unsigned long) msg.getInt(1),
-      (unsigned long) msg.getInt(2)
+      msg.getInt(0),
+      msg.getInt(1),
+      msg.getInt(2)
     );
   //----------------------------------------------------------------------------
   } else if (strcmp(address, oscAddresses[oscVibroNow]) == 0 && msgLength > 0) {
     vibrator->vibrate(msg.getInt(0) > 0);
+  //----------------------------------------------------------------------------
+  } else if (strcmp(address, oscAddresses[oscNeopix]) == 0 && msgLength > 2) {
+    neopix->setColor(
+      (unsigned int) msg.getInt(0),
+      (unsigned int) msg.getInt(1),
+      (unsigned int) msg.getInt(2)
+    );
   //----------------------------------------------------------------------------
   }
 }
