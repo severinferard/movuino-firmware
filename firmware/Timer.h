@@ -1,34 +1,30 @@
-#ifndef _MOVUINO_FIRMWARE_TIMER_H_
-#define _MOVUINO_FIRMWARE_TIMER_H_
+#ifndef _MOVUINO_TIMER_H_
+#define _MOVUINO_TIMER_H_
 
-// this class should be overridden to do specific things in callback
+#include <EventEmitter.h>
 
-class Timer {
-protected:
-  unsigned long timeout;
+template <typename ...T>
+class Timer : public EventEmitter<...T> {
+private:
   unsigned long period;
-  unsigned long nextPeriod;
-  unsigned long startDate;
-  unsigned long lastDate;
-  bool running;
+  unsigned long lastTickDate;
 
 public:
-  Timer(unsigned long p) :
-  timeout(0),
-  period(p), nextPeriod(p),
-  startDate(0), lastDate(0),
-  running(false) {}
+  Timer(unsigned long p) : EventEmitter<unsigned long>(),
+  period(p), lastTickDate(0) {}
 
   ~Timer() {}
 
-  // these methods need not be overridden
-  virtual void setPeriod(unsigned long p);
-  virtual void start(unsigned long t = 0);
-  virtual void stop();
-  virtual void update(); // trig the callback or stop if necessary
+  void setPeriod(unsigned long p) { period = p; }
 
-  // this one should be overridden first
-  virtual void callback() {}
+  void update(T... t) {
+    unsigned long now = millis();
+    
+    if (now - lastTickDate >= period) {
+      lastTickDate = now;
+      emit("tick", t);
+    }
+  }
 };
 
-#endif /* _MOVUINO_FIRMWARE_TIMER_H_ */
+#endif /* _MOVUINO_TIMER_H_ */

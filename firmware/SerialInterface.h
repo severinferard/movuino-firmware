@@ -1,40 +1,53 @@
-#ifndef _MOVUINO_FIRMWARE_SERIALINTERFACE_H_
-#define _MOVUINO_FIRMWARE_SERIALINTERFACE_H_
-
-#define PAULSSUGGESTION
-#define MAX_SERIAL_COMMAND_LENGTH 20
+#ifndef _MOVUINO_SERIAL_INTERFACE_H_
+#define _MOVUINO_SERIAL_INTERFACE_H_
 
 #include <Arduino.h>
 #include <SLIPEncodedSerial.h>
 #include <SLIPEncodedUSBSerial.h>
-#include <OSCMessage.h>
-#include <OSCBundle.h>
+#include "OSCInterface.h"
 
-class Router;
-
-class SerialInterface {
+class SerialInterface : public OSCInterface {
 private:
   SLIPEncodedSerial *slip;
-
-  Config *config;
-  Router *router;
-
   OSCMessage inputOSCMessage;
 
 public:
-  SerialInterface() {
+  SerialInterface() : OSCInterface() {
     slip = new SLIPEncodedSerial(Serial);
   }
-
+  
   ~SerialInterface() {
     delete slip;
   }
 
-  void init(Config *c, Router *r);
-  void update();
+  void start() {
+    slip->begin(115200);
+  }
 
-  void readMessages();
-  bool sendMessage(OSCMessage& msg);
+  void update() {
+    if (slip->available() > 0) {
+      int size;
+      inputOSCMessage.empty();
+
+      while (!slip->endofPacket()) {
+        if ((size = slip->available()) > 0) {
+          while (size--) {
+            inputOSCMessage.fill(slip->read());
+          }
+        }
+      }
+
+      if (!inputOSCMessage.hasError()) {
+        oscEmitter.emitOSCMessage(inputOSCMessage);
+      }
+    }    
+  }
+
+  void sendOSCMessage(OSCMessage& msg) {
+    slip->beginPacket();
+    msg.send(*slip);
+    slip->endPacket();
+  }
 };
 
-#endif /* _MOVUINO_FIRMWARE_SERIALINTERFACE_H_ */
+#endif /* _MOVUINO_SERIAL_INTERFACE_H_ */

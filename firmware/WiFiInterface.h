@@ -1,79 +1,100 @@
-#ifndef _MOVUINO_FIRMWARE_WIFIINTERFACE_H_
-#define _MOVUINO_FIRMWARE_WIFIINTERFACE_H_
+#ifndef _MOVUINO_WIFI_INTERFACE_H_
+#define _MOVUINO_WIFI_INTERFACE_H_
 
-#define MAX_OSC_ADDRESS_SIZE 120
-#define MAX_OSC_ADDRESSES 100
-
-#include <Arduino.h>
-#include <ESP8266WiFi.h>
-
-// maybe someday we could allow to manage a list of networks via OSC messages
-// or from config page in AP mode. when it happens, use addAP method from :
-// #include <ESP8266WiFiMulti.h>
-
-// for TCP OSC :
-// #include <WebSocketsServer.h>
-
+#include <ESPWiFiInterfaceBase.h>
 #include <WiFiUdp.h>
-#include <OSCMessage.h>
-#include "Timer.h"
-#include "globals.h"
+#include "OSCInterface.h"
 
-class Config;
-class Router;
-
-//----------------------------------------------------------------------------//
-
-class WiFiInterface : public Timer {
+class WiFiInterface : public WiFiInterfaceBase, public OSCInterface {
 private:
-  // timer specific vars
-  bool wifiLight;
-  bool batLight;
-  WiFiConnectionState connectionState;
-  unsigned long connectionTimeout;
-
-  bool initialized;
   WiFiUDP udp;
-
-  Config *config;
-  Router *router;
+  IPAddress hostIP;  
+  int udpInputPort;
+  int udpOutputPort;
 
   OSCMessage inputOSCMessage;
-  
+  OSCMessageEventEmitter oscEmitter;
+
 public:
-  WiFiInterface(unsigned long blinkPeriod = LOW_BLINK_PERIOD,
-                unsigned long timeout = WIFI_CONNECTION_TIMEOUT) :
-  Timer(blinkPeriod),
-  wifiLight(false),
-  batLight(false),
-  connectionState(WiFiDisconnected),
-  connectionTimeout(timeout),
-  initialized(false) {}
+  WiFiInterface() :
+  WiFiInterfaceBase(),
+  OSCInterface(),
+  udpInputPort(8001),
+  udpOutputPort(8000) {
+    hostIP = IPAddress(
+      DEFAULT_HOST_IP_1,
+      DEFAULT_HOST_IP_2,
+      DEFAULT_HOST_IP_3,
+      DEFAULT_HOST_IP_4
+    );
+  }
 
-  virtual ~WiFiInterface() {}
+  ~WiFiInterface() {}
 
-  // override parent methods :
-  void stop(); // called back by update when timeout is over
-  void callback();
+  void startWiFi(WiFiMode_t mode, const char *ssid, const char *pass = "") {
+    ESPWiFiInterfaceBase::startWiFi(mode, ssid, pass);
+    udp.begin(udpInputPort);
+  }
 
-  void init(Config *c, Router *r); // supposed to be called once at start time
-  void update();
+  void stopWiFi() {
+    ESPWiFiInterfaceBase::stopWiFi();
+    udp.stop();
+  }
 
-  void readMessages(/*Router *router*/);
-  bool sendMessage(OSCMessage &msg, const char *hostIP, int portOut);
+  void update() {
+    ESPWiFiInterfaceBase::update();
 
-  String getStringMacAddress();
-  void getIPAddress(int *res); // res must be of type int[4]
-  String getStringIPAddress();
+    if (isActive()) {
+      int packetSize = udp.parsePacket();
+      inputOSCMessage.empty();
 
-  WiFiConnectionState getConnectionState();
-  bool isConnected();
-  void startWiFi();
-  void stopWiFi();
-  void toggleWiFiState();
+      if (packetSize > 0) {
+        while (packetSize--) {
+          inputOSCMessage.fill(udp.read());
+        }
 
-private:
-  void onConnectionEvent(WiFiConnectionState s);
+        if (!inputOSCMessage.hasError()) {
+          oscEmitter.emitOSCMessage(inputOSCMessage);
+        }
+      }
+    }
+  }
+
+  void setHostIP(IPAddress ip) {
+    hostIP = ip;
+  }
+  
+  void setUdpInputPort(int port) {
+    if (isActive() && udpInputPort != port) {
+      udp.begin(port);
+    }
+
+    udpInputPort = port;
+  }
+
+  void setUdpOutputPort(int port) {
+    udpOutputPort = port;
+  }
+
+  void sendOSCMessage(OSCMessage& msg) {
+    if (isActive()) {
+      udp.beginPacket(hostIP, udpOutputPort);
+      msg.send(udp);
+      udp.endPacket();
+    }
+  }
+
+  const char *getMovuinoUUID() {
+    uint8_t mac[6];
+    char dst[13]; // "movuino-" + 12 mac characters + '\0'
+    getMacAddress(&(mac[0]));
+    sprintf(
+      dst, "%02X%02X%02X%02X%02X%02X",
+      mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
+    );
+
+    return static_cast<const char *>(dst);
+  }
 };
 
-#endif /* _MOVUINO_FIRMWARE_WIFIINTERFACE_H_ */
+#endif /* _MOVUINO_WIFI_INTERFACE_H_ */

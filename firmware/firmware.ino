@@ -1,55 +1,62 @@
-#include "Wire.h"
-
-#include "Router.h"
-#include "Config.h"
-#include "Neopix.h"
-#include "Button.h"
+#include "ConfigFile.h"
+#include "IndicatorLight"
+#include "NeoPixel.h"
 #include "Vibrator.h"
-#include "Sensors.h"
+#include "Button.h"
+#include "IntegratedSensors.h"
+#include "Router.h"
 #include "SerialInterface.h"
 #include "WiFiInterface.h"
-#include "AccessPoint.h"
 
 #include "globals.h"
 
-Router router;
-Config config;
+ConfigFile config;
+IndicatorLight indic;
+NeoPixel neopix;
+Vibrator vibro;
 Button button;
-Sensors sensors;
-Vibrator vibrator;
-Neopix neopix;
+IntegratedSensors imu;
+Router router;
 SerialInterface serial;
 WiFiInterface wifi;
 
-AccessPoint *ap;
+// TODO : add a SensorShield class
 
-WiFiBootMode mode;
+WiFiBootMode bootMode;
+ConfigInterface *wifiConfig;
 
 void setup() {
-  pinMode(pinBtn, INPUT_PULLUP); // pin for the button
-  pinMode(pinLedWifi, OUTPUT); // pin for the wifi led
-  pinMode(pinLedBat, OUTPUT); // pin for the battery led
-  pinMode(pinVibro, OUTPUT); // pin for the vibrator
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(VIBRATOR_PIN, OUTPUT);
+#ifdef ESP8266
+  pinMode(LED_PIN, OUTPUT);
+#endif
 
-  mode = checkBootMode();
+  neopix.init();
+  indic.init(&neopix);
 
-  if (mode == WiFiStation) {
-    Wire.begin();
-    Wire.setClock(400000);
-      
-    router.init(&config, &button, &neopix, &sensors, &vibrator, &serial, &wifi);
+  BootModeChecker bootChecker([&](bool ledOn) {
+    if (ledOn) { indic.setHigh(); }
+    else { indic.setLow(); }
+    indic.update();
+  });
+
+  bootMode = bootChecker.check();
+
+  if (bootMode == WiFiBootModeNormal) {
+    router.init(&config, &indic, &neopix, &vibro, &button, &imu, &serial, &wifi);
   } else {
-    ap = new AccessPoint();
-    ap->init(&config);
+    wifiConfig = new ConfigInterface();
+    wifiConfig->init(&config);
   }
 }
 
 void loop() {
-  if (mode == WiFiStation) {
+  if (bootMode == WiFiBootModeNormal) {
     router.update();
   } else {
-    ap->update();
+    wifiConfig->update();
   }
 
-  delay(1); // let the board breathe
+  delay(MAIN_EXECUTION_PERIOD);
 }
