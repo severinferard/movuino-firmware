@@ -65,7 +65,7 @@ public:
     }
   }
 
-  void vibrate(bool on) {
+  void vibrate(bool vibOnOff) {
     if (vibOnOff) {
       isConstantlyVibrating = true;
     } else {

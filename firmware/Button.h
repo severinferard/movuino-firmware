@@ -4,7 +4,7 @@
 class Button {
 private:
   bool btnOn;
-  bool holding;
+  bool btnHolding;
   unsigned long lastBtnDate;
   ButtonState state;
 
@@ -19,15 +19,15 @@ public:
     unsigned long now = millis();
 
     if (btn && !btnOn) {
-      btnOn = holding = true;
+      btnOn = btnHolding = true;
       lastBtnDate = now;
       state = ButtonStatePressed;
     } else if (!btn && btnOn) {
-      btnOn = holding = false;
+      btnOn = btnHolding = false;
       state = ButtonStateReleased;
-    } else if (btnOn && holding &&
+    } else if (btnOn && btnHolding &&
                now - lastBtnDate > BUTTON_STATE_HOLD_DURATION) {
-      holding = false;
+      btnHolding = false;
       state = ButtonStateHolding;
     }
   }

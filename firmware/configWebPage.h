@@ -82,14 +82,14 @@ static const char configWebPage[] PROGMEM = R"=====(
     $wiFiMode.addEventListener('change', checkWiFiMode);
 
     var connection = new WebSocket('ws://'+location.hostname+':81/', ['arduino']);
-    // connection.onopen = function() { connection.send('Connected');};
+    // connection.onopen = function() { connection.send('Connect ' /* + new Date() */); };
     // connection.onerror = function(error) { console.log('WebSocket Error ', error); };
     connection.onmessage = function(e) {
       var arg;
       var args = e.data.split('\n');
       console.log(e.data);
       if (args[0] === 'settings') {
-        $userId.value = args[1];
+        $userid.value = args[1];
         $useWiFi.checked = parseInt(args[2]) != 0;
 
         arg = parseInt(args[3]);
@@ -129,6 +129,8 @@ static const char configWebPage[] PROGMEM = R"=====(
 
         var fullId = `${args[17]}@${args[18]}`;
         document.getElementById('version').innerHTML = fullId;
+
+        checkWiFiMode();
       }
     };
 

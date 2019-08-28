@@ -5,33 +5,38 @@
 #include <WiFiUdp.h>
 #include "OSCInterface.h"
 
-class WiFiInterface : public WiFiInterfaceBase, public OSCInterface {
+class WiFiInterface : public ESPWiFiInterfaceBase, public OSCInterface {
 private:
   WiFiUDP udp;
   IPAddress hostIP;  
   int udpInputPort;
   int udpOutputPort;
 
+  char uuid[13];
+
   OSCMessage inputOSCMessage;
-  OSCMessageEventEmitter oscEmitter;
 
 public:
   WiFiInterface() :
-  WiFiInterfaceBase(),
+  ESPWiFiInterfaceBase(),
   OSCInterface(),
   udpInputPort(8001),
   udpOutputPort(8000) {
-    hostIP = IPAddress(
-      DEFAULT_HOST_IP_1,
-      DEFAULT_HOST_IP_2,
-      DEFAULT_HOST_IP_3,
-      DEFAULT_HOST_IP_4
+    hostIP = IPAddress(0, 0, 0, 0);
+
+    uint8_t mac[6];
+    getMacAddress(&(mac[0]));
+    sprintf(
+      uuid, "%02X%02X%02X%02X%02X%02X",
+      mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
     );
   }
 
   ~WiFiInterface() {}
 
   void startWiFi(WiFiMode_t mode, const char *ssid, const char *pass = "") {
+    if (isActive()) stopWiFi();
+    
     ESPWiFiInterfaceBase::startWiFi(mode, ssid, pass);
     udp.begin(udpInputPort);
   }
@@ -85,15 +90,7 @@ public:
   }
 
   const char *getMovuinoUUID() {
-    uint8_t mac[6];
-    char dst[13]; // "movuino-" + 12 mac characters + '\0'
-    getMacAddress(&(mac[0]));
-    sprintf(
-      dst, "%02X%02X%02X%02X%02X%02X",
-      mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]
-    );
-
-    return static_cast<const char *>(dst);
+    return static_cast<const char *>(uuid);
   }
 };
 

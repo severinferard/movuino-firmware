@@ -12,6 +12,8 @@
 // class SerialInterface;
 // class WiFiInterface;
 
+#include <Arduino.h>
+
 #include "ConfigFile.h"
 #include "IndicatorLight.h"
 #include "NeoPixel.h"
@@ -34,19 +36,24 @@ private:
   SerialInterface *serial;
   WiFiInterface *wifi;
 
-  bool useSerial;
+  // bool stationMode;
   bool useWiFi;
+  bool useSerial;
   bool readMag;
   bool useNeoPixelAsIndicator;
 
+  int outputOSCPeriod;
   int connectionState;
 
   OSCMessage outputOSCMessage;
   char arg[MAX_OSC_STRING_ARG_LENGTH];
 
+  OSCMessage outputFrameMessage;
+  unsigned long lastFrameOutputDate;
+
 public:
-  Router();
-  ~Router();
+  Router() {}
+  ~Router() {}
 
   void init(ConfigFile *config, IndicatorLight *indic, NeoPixel *neopix,
             Vibrator *vibro, Button *button, IntegratedSensors *imu,
@@ -60,11 +67,12 @@ public:
     this->serial = serial;
     this->wifi = wifi;
 
-    useSerial = config->getUseSerial();
+    // stationMode = config->getStationMode();
     useWiFi = config->getUseWiFi();
+    useSerial = config->getUseSerial();
     readMag = config->getReadMag();
     useNeoPixelAsIndicator = config->getUseNeoPixelAsIndicator();
-    outputOSCPeriod = config->getOutputOSCPeriod();
+    outputOSCPeriod = config->getOSCOutputPeriod();
 
     connectionState = 0;
 
@@ -79,96 +87,142 @@ public:
 
     ////////// serial stuff
 
-    addConfigOSCMessageListeners(static_cast<OSCInterface *>(serial));
+    addConfigOSCMessageListeners(serial);
 
     if (useSerial) {
-      addNormalOSCMessageListeners(static_cast<OSCInterface *>(serial));
+      addNormalOSCMessageListeners(serial);
     }
 
     serial->start();
 
     ////////// wifi stuff
 
-    wifi->enableDHCP(config->getDHCPOn());
+    wifi->setUdpInputPort(config->getUdpInputPort());
+    wifi->setUdpOutputPort(config->getUdpOutputPort());
     wifi->setHostIP(config->getHostIP());
-    wifi->setStaticIP(config->getStaticIP());
+    wifi->setStaticIP(config->getStaticIP(), false);
     wifi->setGatewayIP(config->getGatewayIP());
     wifi->setSubnetIP(config->getSubnetIP());
 
-    wifi->setConnectionStateListener([&](WiFiConnectionState s) {
-      outputOSCMessage.empty();
-      outputOSCMessage.setAddress("/wifi/state");
-
-      switch (s) {
-        case WiFiDisconnected:
-          indic->setLow();
-          connectionState = 0;
-          break;
-        case WiFiConnecting:
-          indic->setPeriod(LOW_BLINK_PERIOD);
-          connectionState = 2;
-          break;
-        case WiFiConnected:
-          indic->setHigh();
-          connectionState = 1;
-          break;
-        default:
-          break;
-      }
-
-      indic->update();
-      outputOSCMessage.add(connectionState);
-      serial->sendOSCMessage(outputOSCMessage);
+    wifi->setConnectionStateListener([this](WiFiConnectionState s) {
+      onWiFiConnectionState(s);
     });
 
+    outputFrameMessage.setAddress("/movuino");
+
     if (useWiFi) {
-      addNormalOSCMessageListeners(static_cast<OSCInterface *>(wifi));
+      addNormalOSCMessageListeners(wifi);
       startWiFi();
     }
   }
 
+  void onWiFiConnectionState(WiFiConnectionState s) {
+    switch (s) {
+      case WiFiDisconnected:
+        indic->setLow();
+        connectionState = 0;
+        break;
+      case WiFiConnecting:
+        indic->setPeriod(LOW_BLINK_PERIOD);
+        connectionState = 2;
+        break;
+      case WiFiConnected:
+        indic->setHigh();
+        connectionState = 1;
+        break;
+      default:
+        break;
+    }
+
+    outputOSCMessage.setAddress("/wifi/state");
+    outputOSCMessage.empty();
+    outputOSCMessage.add(connectionState);
+    serial->sendOSCMessage(outputOSCMessage);    
+  }
+
   void update() {
+
     indic->update();
-    imu->update();
+    neopix->update();
+    vibro->update();
+    button->update();
 
     serial->update();
     if (useWiFi) { wifi->update(); }
 
-    if ()
+    unsigned long now = millis();
+
+    if (now - lastFrameOutputDate >= outputOSCPeriod) {
+
+      ////////// SEND OSC FRAME !!!!!
+
+      lastFrameOutputDate = now;
+
+      imu->update();
+      outputFrameMessage.empty();
+      outputFrameMessage.add(config->getMovuinoID());
+      outputFrameMessage.add(imu->getAccelX());
+      outputFrameMessage.add(imu->getAccelY());
+      outputFrameMessage.add(imu->getAccelZ());
+      outputFrameMessage.add(imu->getGyroX());
+      outputFrameMessage.add(imu->getGyroY());
+      outputFrameMessage.add(imu->getGyroZ());
+      outputFrameMessage.add(imu->getMagX());
+      outputFrameMessage.add(imu->getMagY());
+      outputFrameMessage.add(imu->getMagZ());
+
+      ButtonState s = button->getState();
+      int val = 0;
+      if (s == ButtonStatePressed) {
+        val = 1;
+      } else if (s == ButtonStateReleased) {
+        val = 0;
+      } else if (s == ButtonStateHolding) {
+        val = 2;
+      }
+      outputFrameMessage.add(val);
+
+      outputFrameMessage.add(vibro->isVibrating() ? 1 : 0);
+
+      if (useSerial) serial->sendOSCMessage(outputFrameMessage);
+      if (useWiFi) wifi->sendOSCMessage(outputFrameMessage);
+    }
   }
 
 private:
   void startWiFi() {
     if (config->getStationMode()) {
-      wifi->start(WIFI_STA, config->getStaSsid(), config->getStaPass());
+      wifi->enableDHCP(true);
+      wifi->startWiFi(WIFI_STA, config->getStaSsid(), config->getStaPass());
     } else {
-      wifi->start(WIFI_AP, config->getApSsid(), config->getApPass());
+      wifi->enableDHCP(false);
+      wifi->startWiFi(WIFI_AP, config->getApSsid(), config->getApPass());
     }    
   }
 
   ////////// "normal" osc messages
 
   void addNormalOSCMessageListeners(OSCInterface *interface) {
-    interface->assOSCMessageListener("/vibro/pulse", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/vibro/pulse", [&, interface](OSCMessage& msg) {
       if (msg.size() > 2) {
         vibro->pulse(msg.getInt(0), msg.getInt(1), msg.getInt(2));
       }
     });
 
-    interface->assOSCMessageListener("/vibro/now", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/vibro/now", [&, interface](OSCMessage& msg) {
       if (msg.size() > 0) {
         vibro->vibrate(msg.getInt(0) > 0);
       }
     });
 
-    interface->assOSCMessageListener("/neopix", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/neopix", [&, interface](OSCMessage& msg) {
       if (useNeoPixelAsIndicator && msg.size() == 3) {
         neopix->setColor(msg.getInt(0), msg.getInt(1), msg.getInt(2));
       }
     });
   }
 
-  void removeNormalOSCMessageListeners(OSCMessage *interface) {
+  void removeNormalOSCMessageListeners(OSCInterface *interface) {
     interface->removeOSCMessageListener("/vibro/pulse");
     interface->removeOSCMessageListener("/vibro/now");
     interface->removeOSCMessageListener("/vibro/neopix");
@@ -177,24 +231,24 @@ private:
   ////////// configuration OSC messages
 
   void addConfigOSCMessageListeners(OSCInterface *interface) {
-    interface->addOSCMessageListener("/hello", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/hello", [&, interface](OSCMessage& msg) {
       msg.empty();
       msg.add("movuino");
       msg.add(wifi->getMovuinoUUID());
       msg.add(connectionState);
       msg.add(WiFi.localIP().toString().c_str());
-      msg.add(config->getMovuinoId());
+      msg.add(config->getMovuinoID());
       msg.add(config->getFirmwareVersion());
       interface->sendOSCMessage(msg);
     });
 
-    interface->addOSCMessageListener("/id/get", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/id/get", [&, interface](OSCMessage& msg) {
       msg.empty();
       msg.add(config->getMovuinoID());
       interface->sendOSCMessage(msg);
     });
 
-    interface->addOSCMessageListener("/id/set", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/id/set", [&, interface](OSCMessage& msg) {
       if (msg.size() > 0) {
         msg.getString(0, static_cast<char *>(arg), MAX_OSC_STRING_ARG_LENGTH);
         if (strcmp(config->getMovuinoID(), static_cast<const char *>(arg)) != 0) {
@@ -205,23 +259,27 @@ private:
       }
     });
 
-    interface->addOSCMessageListener("/serial/enable", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/serial/enable", [&, interface](OSCMessage& msg) {
       if (msg.size() > 0) {
         bool e = msg.getInt(0) > 0;
         if (e != useSerial) {
           useSerial = e;
 
-          if (useSerial) { addNormalOSCMessageListeners(serial); }
-          else { removeNormalOSCMessageListeners(serial); }
+          OSCInterface *s = static_cast<OSCInterface *>(serial);
+          if (useSerial) {
+            addNormalOSCMessageListeners(s);
+          } else {
+            removeNormalOSCMessageListeners(s);
+          }
           
-          config->setUseSerial(enableSerial);
+          config->setUseSerial(useSerial);
           config->store();
         }
         interface->sendOSCMessage(msg);
       }
     });
 
-    interface->addOSCMessageListener("/magneto/enable", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/magneto/enable", [&, interface](OSCMessage& msg) {
       if (msg.size() > 0) {
         bool e = msg.getInt(0) > 0;
         if (e != readMag) {
@@ -234,37 +292,89 @@ private:
       }
     });
 
-    interface->addOSCMessageListener("/wifi/enable", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/wifi/enable", [&, interface](OSCMessage& msg) {
       if (msg.size() > 0) {
         bool e = msg.getInt(0) > 0;
         if (e != useWiFi) {
           useWiFi = e;
 
-          if (useWiFi) { startWiFi(); }
-          else { wifi->stopWiFi(); }
+          OSCInterface *s = static_cast<OSCInterface *>(wifi);
+          if (useWiFi) {
+            addNormalOSCMessageListeners(s);
+            startWiFi();
+          } else {
+            wifi->stopWiFi();
+            removeNormalOSCMessageListeners(s);
+          }
 
           config->setUseWiFi(useWiFi);
           config->store();
         }
+        interface->sendOSCMessage(msg);
       }
     });
 
-    interface->addOSCMessageListener("/wifi/get", [&](OSCMessage& msg) {
-
+    interface->addOSCMessageListener("/wifi/get", [&, interface](OSCMessage& msg) {
+      msg.empty();
+      msg.add(config->getStaSsid());
+      msg.add(config->getStaPass());
+      msg.add(config->getHostIP().toString().c_str());
+      interface->sendOSCMessage(msg);
     });
 
-    interface->addOSCMessageListener("/wifi/set", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/wifi/set", [&, interface](OSCMessage& msg) {
+      if (msg.size() > 1) {
+        msg.getString(0, (char *)arg, MAX_OSC_STRING_ARG_LENGTH);
+        config->setStaSsid((const char *)arg);
 
+        if (msg.size() == 2) { // no password
+          config->setStaPass("");
+          msg.getString(1, static_cast<char *>(arg), MAX_OSC_STRING_ARG_LENGTH);
+        } else { // msg.size() >= 3, we have a password
+          msg.getString(1, static_cast<char *>(arg), MAX_OSC_STRING_ARG_LENGTH);
+          config->setStaPass(static_cast<const char *>(arg));
+          msg.getString(2, static_cast<char *>(arg), MAX_OSC_STRING_ARG_LENGTH);
+        }
+
+        IPAddress ip;
+        ip.fromString(static_cast<const char *>(arg));
+        wifi->setHostIP(ip);
+        config->setHostIP(ip);
+        config->store();
+        interface->sendOSCMessage(msg);
+
+        if (useWiFi) {
+          startWiFi();
+        }
+      }
     });
 
-    interface->addOSCMessageListener("/ports/get", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/ap/get", [&, interface](OSCMessage& msg) {
+      msg.empty();
+      msg.add(config->getStationMode() ? 0 : 1);
+      interface->sendOSCMessage(msg);
+    });
+
+    interface->addOSCMessageListener("/ap/set", [&, interface](OSCMessage& msg) {
+      if (msg.size() > 0) {
+        config->setStationMode(msg.getInt(0) == 0);
+        config->store();
+        interface->sendOSCMessage(msg);
+
+        if (useWiFi) {
+          startWiFi();
+        }
+      }
+    });
+
+    interface->addOSCMessageListener("/ports/get", [&, interface](OSCMessage& msg) {
       msg.empty();
       msg.add(config->getUdpInputPort());
       msg.add(config->getUdpOutputPort());
       interface->sendOSCMessage(msg);
     });
 
-    interface->addOSCMessageListener("/ports/set", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/ports/set", [&, interface](OSCMessage& msg) {
       if (msg.size() > 1) {
         config->setUdpInputPort(msg.getInt(0));
         config->setUdpOutputPort(msg.getInt(1));
@@ -273,28 +383,37 @@ private:
       }
     });
 
-    interface->addOSCMessageListener("/ranges/get", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/ranges/get", [&, interface](OSCMessage& msg) {
       msg.empty();
       msg.add(config->getAccelRange());
       msg.add(config->getGyroRange());
       interface->sendOSCMessage(msg);
     });
 
-    interface->addOSCMessageListener("/ranges/set", [&](OSCMessage& msg) {
+    interface->addOSCMessageListener("/ranges/set", [&, interface](OSCMessage& msg) {
       if (msg.size() > 1) {
         config->setAccelRange(msg.getInt(0));
         config->setGyroRange(msg.getInt(1));
+        imu->setAccelRange(config->getAccelRange());
+        imu->setGyroRange(config->getGyroRange());
         config->store();
         interface->sendOSCMessage(msg);
       }
     });
 
-    interface->addOSCMessageListener("/frameperiod/get", [&](OSCMessage& msg) {
-
+    interface->addOSCMessageListener("/frameperiod/get", [&, interface](OSCMessage& msg) {
+      msg.empty();
+      msg.add(config->getOSCOutputPeriod());
+      interface->sendOSCMessage(msg);
     });
 
-    interface->addOSCMessageListener("/frameperiod/set", [&](OSCMessage& msg) {
-
+    interface->addOSCMessageListener("/frameperiod/set", [&, interface](OSCMessage& msg) {
+      if (msg.size() > 0) {
+        config->setOSCOutputPeriod(msg.getInt(0));
+        config->store();
+        interface->sendOSCMessage(msg);
+        outputOSCPeriod = config->getOSCOutputPeriod();
+      }
     });
   }
 };

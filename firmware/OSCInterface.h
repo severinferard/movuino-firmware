@@ -1,20 +1,20 @@
 #ifndef _MOVUINO_OSC_INTERFACE_H_
 #define _MOVUINO_OSC_INTERFACE_H_
 
-#include <EventEmitter.h>
 #include <OSCMessage.h>
+#include <ESPEventEmitter.h>
 
-////////// base class for serial and wifi :
+////////// base class for SerialInterface and WiFiInterface :
 
 class OSCInterface {
 protected:
   /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-  class OSCMessageEventEmitter : public EventEmitter<OSCMessage&> {
+  class OSCMessageEventEmitter : public ESPEventEmitter<OSCMessage&> {
   private:
     char address[128]; // maximum osc address length
     
   public:
-    OSCMessageEventEmitter() : EventEmitter<OSCMessage&>() {}
+    OSCMessageEventEmitter() : ESPEventEmitter<OSCMessage&>() {}
     ~OSCMessageEventEmitter() {}
 
     void emitOSCMessage(OSCMessage& msg) {
@@ -30,15 +30,15 @@ public:
   OSCInterface() {}
   virtual ~OSCInterface() {}
 
-  void addOSCMessageListener(const char *address, void (*callback)(OSCMessage& msg)) {
-    oscEmitter.addListener(event, callback);    
+  void addOSCMessageListener(const char *address, std::function<void(OSCMessage&)> callback) {
+    oscEmitter.addListener(address, callback);    
   }
 
   void removeOSCMessageListener(const char *address) {
     oscEmitter.removeListeners(address);
   }
 
-  void sendOSCMessage(OSCMessage& msg) = 0; // must be defined in child classes
+  virtual void sendOSCMessage(OSCMessage& msg) = 0; // must be defined in child classes
 };
 
 #endif /* _MOVUINO_OSC_INTERFACE_H_ */

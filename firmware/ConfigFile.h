@@ -1,30 +1,50 @@
 #ifndef _MOVUINO_CONFIG_FILE_H_
 #define _MOVUINO_CONFIG_FILE_H_
 
+// #ifdef ESP8266
+// #include <ESP8266WiFi.h>
+// #elif defined(ESP32)
+// #include <WiFi.h>
+// #endif
+
 #include <ESPConfigFile.h>
+#include "WiFiInterface.h"
 #include "globals.h"
 
 class ConfigFile {
 private:
   char firmwareVersion[12]; // xxx.xxx.xxx + '\0'
+  char movuinoUUID[13]; // 12 mac characters + '\0'
+  char apSsid[21]; // "movuino-" + 12 mac characters + '\0'
   ESPConfigFile *config;
 
 public:
   ConfigFile() {
-    sprintf(firmwareVersion, "%i.%i.%i",
+    config = new ESPConfigFile("config"); // will look for "/config.txt" file
+  }
+
+  ~ConfigFile() {
+    delete config;
+  }
+
+  void init(WiFiInterface *wifi) {
+    sprintf(firmwareVersion, "v%i.%i.%i",
       MOVUINO_FIRMWARE_VERSION_MAJOR,
       MOVUINO_FIRMWARE_VERSION_MINOR,
       MOVUINO_FIRMWARE_VERSION_PATCH
     );
 
-    config = new ESPConfigFile("config"); // will look for "/config.txt" file
+    strcpy(movuinoUUID, wifi->getMovuinoUUID());
+
+    strcpy(apSsid, "movuino-");
+    strcat(apSsid, wifi->getMovuinoUUID());
 
     config->addBoolParameter("useSerial", DEFAULT_USE_SERIAL);
     config->addBoolParameter("useWiFi", DEFAULT_USE_WIFI);
     config->addBoolParameter("readMag", DEFAULT_READ_MAG);
     config->addBoolParameter("useNeoPixelAsIndicator", DEFAULT_USE_NEOPIXEL_AS_INDICATOR);
 
-    config->setIntParameter("oscOutputPeriod", DEFAULT_OSC_OUTPUT_PERIOD);
+    config->addIntParameter("oscOutputPeriod", DEFAULT_OSC_OUTPUT_PERIOD);
 
     config->addIntParameter("udpInputPort", DEFAULT_UDP_INPUT_PORT);
     config->addIntParameter("udpOutputPort", DEFAULT_UDP_OUTPUT_PORT);
@@ -37,7 +57,7 @@ public:
     config->addBoolParameter("stationMode", DEFAULT_STATION_MODE);
     config->addBoolParameter("dhcpOn", DEFAULT_DHCP_ON);
 
-    config->addStringParameter("apSsid", DEFAULT_AP_SSID);
+    config->addStringParameter("apSsid", static_cast<const char *>(apSsid));
     config->addStringParameter("apPass", DEFAULT_AP_PASS);
 
     config->addStringParameter("staSsid", DEFAULT_STA_SSID);
@@ -64,10 +84,23 @@ public:
     config->addIntParameter("subnetIP4", DEFAULT_SUBNET_IP_4);
 
     config->load();
-  }
 
-  ~ConfigFile() {
-    delete config;
+    config->setIntParameter("staticIP1", DEFAULT_STATIC_IP_1);
+    config->setIntParameter("staticIP2", DEFAULT_STATIC_IP_2);
+    config->setIntParameter("staticIP3", DEFAULT_STATIC_IP_3);
+    config->setIntParameter("staticIP4", DEFAULT_STATIC_IP_4);
+
+    config->setIntParameter("gatewayIP1", DEFAULT_GATEWAY_IP_1);
+    config->setIntParameter("gatewayIP2", DEFAULT_GATEWAY_IP_2);
+    config->setIntParameter("gatewayIP3", DEFAULT_GATEWAY_IP_3);
+    config->setIntParameter("gatewayIP4", DEFAULT_GATEWAY_IP_4);
+
+    config->setIntParameter("subnetIP1", DEFAULT_SUBNET_IP_1);
+    config->setIntParameter("subnetIP2", DEFAULT_SUBNET_IP_2);
+    config->setIntParameter("subnetIP3", DEFAULT_SUBNET_IP_3);
+    config->setIntParameter("subnetIP4", DEFAULT_SUBNET_IP_4);
+
+    config->store();
   }
 
   void load() { config->load(); }
@@ -81,13 +114,13 @@ public:
   bool getReadMag() { return config->getBoolParameter("readMag"); }
   bool getUseNeoPixelAsIndicator() { return config->getBoolParameter("useNeoPixelAsIndicator"); }
 
-  long getOSCOutputPeriod() { return config->getIntParameter("oscOutputPeriod"); }
+  int getOSCOutputPeriod() { return static_cast<int>(config->getIntParameter("oscOutputPeriod")); }
 
-  long getUdpInputPort() { return config->getIntParameter("udpInputPort"); }
-  long getUdpOutputPort() { return config->getIntParameter("udpOutputPort"); }
+  int getUdpInputPort() { return static_cast<int>(config->getIntParameter("udpInputPort")); }
+  int getUdpOutputPort() { return static_cast<int>(config->getIntParameter("udpOutputPort")); }
 
-  long getAccelRange() { return config->getIntParameter("accelRange"); }
-  long getGyroRange() { return config->getIntParameter("gyroRange"); }
+  int getAccelRange() { return static_cast<int>(config->getIntParameter("accelRange")); }
+  int getGyroRange() { return static_cast<int>(config->getIntParameter("gyroRange")); }
 
   const char *getMovuinoID() { return config->getStringParameter("movuinoID"); }
 
@@ -100,35 +133,60 @@ public:
   const char *getStaSsid() { return config->getStringParameter("staSsid"); }
   const char *getStaPass() { return config->getStringParameter("staPass"); }
 
-  void getHostIP(IPAddress& ip) {
-    ip[0] = config->getIntParameter("hostIP1");
-    ip[1] = config->getIntParameter("hostIP2");
-    ip[2] = config->getIntParameter("hostIP3");
-    ip[3] = config->getIntParameter("hostIP4");
+  IPAddress getHostIP(/*IPAddress& ip*/) {
+    return IPAddress(
+      config->getIntParameter("hostIP1"),
+      config->getIntParameter("hostIP2"),
+      config->getIntParameter("hostIP3"),
+      config->getIntParameter("hostIP4")
+    );
+    // ip[0] = config->getIntParameter("hostIP1");
+    // ip[1] = config->getIntParameter("hostIP2");
+    // ip[2] = config->getIntParameter("hostIP3");
+    // ip[3] = config->getIntParameter("hostIP4");
   }
 
-  void getStaticIP(IPAddress& ip) {
-    ip[0] = config->getIntParameter("staticIP1");
-    ip[1] = config->getIntParameter("staticIP2");
-    ip[2] = config->getIntParameter("staticIP3");
-    ip[3] = config->getIntParameter("staticIP4");
+  IPAddress getStaticIP(/*IPAddress& ip*/) {
+    return IPAddress(
+      config->getIntParameter("staticIP1"),
+      config->getIntParameter("staticIP2"),
+      config->getIntParameter("staticIP3"),
+      config->getIntParameter("staticIP4")
+    );
+    // ip[0] = config->getIntParameter("staticIP1");
+    // ip[1] = config->getIntParameter("staticIP2");
+    // ip[2] = config->getIntParameter("staticIP3");
+    // ip[3] = config->getIntParameter("staticIP4");
   }
 
-  void getGatewayIP(IPAddress& ip) {
-    ip[0] = config->getIntParameter("gatewayIP1");
-    ip[1] = config->getIntParameter("gatewayIP2");
-    ip[2] = config->getIntParameter("gatewayIP3");
-    ip[3] = config->getIntParameter("gatewayIP4");
+  IPAddress getGatewayIP(/*IPAddress& ip*/) {
+    return IPAddress(
+      config->getIntParameter("gatewayIP1"),
+      config->getIntParameter("gatewayIP2"),
+      config->getIntParameter("gatewayIP3"),
+      config->getIntParameter("gatewayIP4")
+    );
+    // ip[0] = config->getIntParameter("gatewayIP1");
+    // ip[1] = config->getIntParameter("gatewayIP2");
+    // ip[2] = config->getIntParameter("gatewayIP3");
+    // ip[3] = config->getIntParameter("gatewayIP4");
   }
 
-  void getSubnetIP(IPAddress& ip) {
-    ip[0] = config->getIntParameter("subnetIP1");
-    ip[1] = config->getIntParameter("subnetIP2");
-    ip[2] = config->getIntParameter("subnetIP3");
-    ip[3] = config->getIntParameter("subnetIP4");
+  IPAddress getSubnetIP(/*IPAddress& ip*/) {
+    return IPAddress(
+      config->getIntParameter("subnetIP1"),
+      config->getIntParameter("subnetIP2"),
+      config->getIntParameter("subnetIP3"),
+      config->getIntParameter("subnetIP4")
+    );
+    // ip[0] = config->getIntParameter("subnetIP1");
+    // ip[1] = config->getIntParameter("subnetIP2");
+    // ip[2] = config->getIntParameter("subnetIP3");
+    // ip[3] = config->getIntParameter("subnetIP4");
   }
 
   const char *getFirmwareVersion() { return static_cast<const char *>(firmwareVersion); }
+  const char *getMovuinoUUID() { return static_cast<const char *>(movuinoUUID); }
 
   ////////// setters :
 
@@ -137,13 +195,13 @@ public:
   void setReadMag(bool r) { config->setBoolParameter("readMag", r); }
   void setUseNeoPixelAsIndicator(bool u) { config->setBoolParameter("useNeoPixelAsIndicator", u); }
 
-  void setOSCOutputPeriod(long p) { config->setIntParameter("oscOutputPeriod", p); }
+  void setOSCOutputPeriod(int p) { config->setIntParameter("oscOutputPeriod", p); }
 
-  void setUdpInputPort(long p) { config->setIntParameter("udpInputPort", p); }
-  void setUdpOutputPort(long p) { config->setIntParameter("udpOutputPort", p); }
+  void setUdpInputPort(int p) { config->setIntParameter("udpInputPort", p); }
+  void setUdpOutputPort(int p) { config->setIntParameter("udpOutputPort", p); }
 
-  void setAccelRange(long r) { config->setIntParameter("accelRange", r); }
-  void setGyroRange(long r) { config->setIntParameter("gyroRange", r); }
+  void setAccelRange(int r) { config->setIntParameter("accelRange", r); }
+  void setGyroRange(int r) { config->setIntParameter("gyroRange", r); }
 
   void setMovuinoID(const char *id) { config->setStringParameter("movuinoID", id); }
 

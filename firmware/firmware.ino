@@ -1,5 +1,6 @@
 #include "ConfigFile.h"
-#include "IndicatorLight"
+#include "ConfigInterface.h"
+#include "IndicatorLight.h"
 #include "NeoPixel.h"
 #include "Vibrator.h"
 #include "Button.h"
@@ -34,6 +35,7 @@ void setup() {
 
   neopix.init();
   indic.init(&neopix);
+  config.init(&wifi); // get uuid
 
   BootModeChecker bootChecker([&](bool ledOn) {
     if (ledOn) { indic.setHigh(); }
@@ -46,8 +48,7 @@ void setup() {
   if (bootMode == WiFiBootModeNormal) {
     router.init(&config, &indic, &neopix, &vibro, &button, &imu, &serial, &wifi);
   } else {
-    wifiConfig = new ConfigInterface();
-    wifiConfig->init(&config);
+    wifiConfig = new ConfigInterface(&config);
   }
 }
 

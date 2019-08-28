@@ -7,7 +7,7 @@
 
 class IndicatorLight {
 private:
-  Adafruit_NeoPixel *neopix;
+  NeoPixel *neopix;
 
   bool state;
   bool blinking;
@@ -38,7 +38,9 @@ public:
 
   void setPeriod(unsigned long p) {
     blinking = true;
+    state = true;
     period = p;
+    lastTickDate = millis();
   }
 
   void setHigh() {
@@ -61,13 +63,11 @@ public:
 
     if (useNeoPixel) { // blink in not too bright blue
       neopix->setColor(0, 0, state ? 127 : 0);
-      neopix->update();
     } else {
 #ifdef ESP8266 // no simple led on esp32 version
       digitalWrite(LED_PIN, state ? LOW : HIGH);
 #endif
     }
-#endif
   }
 };
 

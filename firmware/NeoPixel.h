@@ -1,34 +1,35 @@
 #ifndef _MOVUINO_NEOPIXEL_H_
 #define _MOVUINO_NEOPIXEL_H_
 
-#include <Adafruit_NeoPixel.h>
+#include <NeoPixelBus.h>
 #include "globals.h"
 
 class NeoPixel {
 private:
-  Adafruit_NeoPixel pix = Adafruit_NeoPixel(1, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
-  uint8_t red, green, blue;
+  NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> *pix;
+  RgbColor c;
 
 public:
-  NeoPixel() {}
-  ~NeoPixel() {}
+  NeoPixel() {
+    pix = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(1, NEOPIXEL_PIN);
+  }
+  
+  ~NeoPixel() {
+    delete pix;
+  }
 
   void init() {
-    pix.begin();
-    pix.clear();
-    pix.show();
+    pix->Begin();
+    pix->Show();
   }
 
   void setColor(uint8_t r, uint8_t g, uint8_t b) {
-    red = r;
-    green = g;
-    blue = b;
+    c = RgbColor(r, g, b);
   }
 
   void update() {
-    pix.clear();
-    pix.setPixelColor(0, pix.Color(red, green, blue));
-    pix.show();
+    pix->SetPixelColor(0, c);
+    pix->Show();
   }
 };
 

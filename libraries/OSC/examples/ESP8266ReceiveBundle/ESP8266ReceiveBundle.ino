@@ -1,14 +1,18 @@
 /*---------------------------------------------------------------------------------------------
 
-  Open Sound Control (OSC) library for the ESP8266
+  Open Sound Control (OSC) library for the ESP8266/ESP32
 
-  Example for receiving open sound control (OSC) bundles on the ESP8266
+  Example for receiving open sound control (OSC) bundles on the ESP8266/ESP32
   Send integers '0' or '1' to the address "/led" to turn on/off the built-in LED of the esp8266.
 
   This example code is in the public domain.
 
 --------------------------------------------------------------------------------------------- */
+#ifdef ESP8266
 #include <ESP8266WiFi.h>
+#else
+#include <WiFi.h>
+#endif
 #include <WiFiUdp.h>
 #include <OSCMessage.h>
 #include <OSCBundle.h>
@@ -26,6 +30,14 @@ const unsigned int localPort = 8888;        // local port to listen for UDP pack
 
 OSCErrorCode error;
 unsigned int ledState = LOW;              // LOW means led is *on*
+
+#ifndef BUILTIN_LED
+#ifdef LED_BUILTIN
+#define BUILTIN_LED LED_BUILTIN
+#else
+#define BUILTIN_LED 13
+#endif
+#endif
 
 void setup() {
   pinMode(BUILTIN_LED, OUTPUT);
@@ -53,7 +65,11 @@ void setup() {
   Serial.println("Starting UDP");
   Udp.begin(localPort);
   Serial.print("Local port: ");
+#ifdef ESP32
+  Serial.println(localPort);
+#else
   Serial.println(Udp.localPort());
+#endif
 
 }
 
