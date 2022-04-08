@@ -1,0 +1,219 @@
+#N canvas 287 88 1034 509 10;
+#X obj 88 70 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 63 88 mrpeach/unpackOSC;
+#X obj 63 110 mrpeach/pipelist;
+#X obj 253 179 mrpeach/udpsend;
+#X obj 198 66 route from;
+#X obj 177 110 list;
+#X obj 177 88 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X msg 177 131 connect \$1.\$2.\$3.\$4 \$5;
+#X obj 63 133 route /movuino;
+#X obj 34 295 * 0.5;
+#X obj 34 314 + 0.5;
+#X obj 34 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 70 295 * 0.5;
+#X obj 70 314 + 0.5;
+#X obj 70 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 106 295 * 0.5;
+#X obj 106 314 + 0.5;
+#X obj 106 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 158 295 * 0.5;
+#X obj 158 314 + 0.5;
+#X obj 158 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 194 295 * 0.5;
+#X obj 194 314 + 0.5;
+#X obj 194 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 230 295 * 0.5;
+#X obj 230 314 + 0.5;
+#X obj 230 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 282 295 * 0.5;
+#X obj 282 314 + 0.5;
+#X obj 282 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 318 295 * 0.5;
+#X obj 318 314 + 0.5;
+#X obj 318 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 354 295 * 0.5;
+#X obj 354 314 + 0.5;
+#X obj 354 335 vsl 15 128 0 1 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X obj 137 211 unpack f f f f f f f f f f f;
+#X obj 324 131 mrpeach/packOSC;
+#X obj 324 110 list trim;
+#X obj 324 88 list prepend send;
+#X msg 324 66 /vibro/now \$1;
+#X obj 324 44 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 463 295 tgl 50 0 empty empty is_vibrating 0 -7 0 10 -262144
+-1 -1 0 1;
+#X obj 406 295 tgl 50 0 empty empty button 0 -7 0 10 -262144 -1 -1
+0 1;
+#X floatatom 406 349 5 0 0 0 - - -, f 5;
+#X obj 504 96 timer;
+#X obj 504 76 t b b;
+#X floatatom 504 116 5 0 0 0 - - -, f 5;
+#X obj 470 57 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X msg 740 124 ports;
+#X obj 870 253 print;
+#X msg 740 164 open \$1;
+#X floatatom 740 144 5 0 0 0 - - -, f 5;
+#X msg 740 186 close;
+#X obj 721 144 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 739 259 loadbang;
+#X obj 818 195 mrpeach/packOSC;
+#X obj 818 174 list trim;
+#X obj 818 154 list prepend send;
+#X obj 818 323 mrpeach/unpackOSC;
+#X obj 818 345 mrpeach/pipelist;
+#X obj 899 389 print SerialOSC;
+#X msg 818 32 /hello;
+#X text 448 429 /hello :;
+#X obj 818 367 route /movuino;
+#X obj 692 297 t b b;
+#X floatatom 692 337 5 0 0 0 - - -, f 5;
+#X obj 674 299 vsl 15 128 0 127 0 0 empty empty empty 0 -9 0 10 -262144
+-1 -1 0 0;
+#X msg 818 68 /wifi/get;
+#X msg 818 87 /ports/get;
+#X msg 818 106 /range/get;
+#X msg 908 103 /wifi/enable \$1;
+#X obj 907 84 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X text 449 443 movuino <movuino_id> <wifi_connection_state> <movuino_ip>
+;
+#X text 797 443 <movuino_uuid> <firmware_version>;
+#X obj 63 169 list split 1;
+#X obj 33 210 list prepend set;
+#X obj 33 229 list trim;
+#X msg 33 248 movuino1;
+#X msg 727 57 /vibro/now \$1;
+#X obj 727 35 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X msg 818 50 /id/get;
+#X msg 895 37 /id/set movuino1;
+#X obj 790 400 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X obj 818 216 mrpeach/slipenc 65536;
+#X obj 818 301 mrpeach/slipdec 65536;
+#X obj 692 317 timer;
+#X obj 818 253 comport;
+#X msg 739 279 baud 115200 \, pollintervall 1;
+#X msg 574 131 /serial/enable \$1;
+#X obj 574 113 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X obj 574 150 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+1;
+#X msg 574 168 /magneto/enable \$1;
+#X msg 574 223 /frameperiod/set \$1;
+#X obj 658 248 t a;
+#X msg 818 125 /frameperiod/get;
+#X floatatom 574 206 5 0 0 0 - - -, f 5;
+#X obj 63 45 mrpeach/udpreceive 7401;
+#X connect 1 0 2 0;
+#X connect 1 1 2 1;
+#X connect 2 0 8 0;
+#X connect 4 0 5 1;
+#X connect 5 0 7 0;
+#X connect 6 0 5 0;
+#X connect 7 0 3 0;
+#X connect 8 0 75 0;
+#X connect 8 0 46 0;
+#X connect 9 0 10 0;
+#X connect 10 0 11 0;
+#X connect 12 0 13 0;
+#X connect 13 0 14 0;
+#X connect 15 0 16 0;
+#X connect 16 0 17 0;
+#X connect 18 0 19 0;
+#X connect 19 0 20 0;
+#X connect 21 0 22 0;
+#X connect 22 0 23 0;
+#X connect 24 0 25 0;
+#X connect 25 0 26 0;
+#X connect 27 0 28 0;
+#X connect 28 0 29 0;
+#X connect 30 0 31 0;
+#X connect 31 0 32 0;
+#X connect 33 0 34 0;
+#X connect 34 0 35 0;
+#X connect 36 0 9 0;
+#X connect 36 1 12 0;
+#X connect 36 2 15 0;
+#X connect 36 3 18 0;
+#X connect 36 4 21 0;
+#X connect 36 5 24 0;
+#X connect 36 6 27 0;
+#X connect 36 7 30 0;
+#X connect 36 8 33 0;
+#X connect 36 9 43 0;
+#X connect 36 10 42 0;
+#X connect 37 0 3 0;
+#X connect 38 0 37 0;
+#X connect 39 0 38 0;
+#X connect 40 0 39 0;
+#X connect 41 0 40 0;
+#X connect 43 0 44 0;
+#X connect 45 0 47 0;
+#X connect 46 0 45 0;
+#X connect 46 1 45 1;
+#X connect 47 0 48 0;
+#X connect 49 0 87 0;
+#X connect 51 0 87 0;
+#X connect 52 0 51 0;
+#X connect 53 0 87 0;
+#X connect 54 0 52 0;
+#X connect 55 0 88 0;
+#X connect 56 0 84 0;
+#X connect 57 0 56 0;
+#X connect 58 0 57 0;
+#X connect 59 0 60 0;
+#X connect 59 1 60 1;
+#X connect 60 0 64 0;
+#X connect 62 0 58 0;
+#X connect 64 0 83 0;
+#X connect 64 0 65 0;
+#X connect 64 1 61 0;
+#X connect 65 0 86 0;
+#X connect 65 1 86 1;
+#X connect 66 0 67 0;
+#X connect 68 0 58 0;
+#X connect 69 0 58 0;
+#X connect 70 0 58 0;
+#X connect 71 0 58 0;
+#X connect 72 0 71 0;
+#X connect 75 0 76 0;
+#X connect 75 1 36 0;
+#X connect 76 0 77 0;
+#X connect 77 0 78 0;
+#X connect 79 0 58 0;
+#X connect 80 0 79 0;
+#X connect 81 0 58 0;
+#X connect 82 0 58 0;
+#X connect 84 0 87 0;
+#X connect 85 0 59 0;
+#X connect 86 0 66 0;
+#X connect 87 0 85 0;
+#X connect 87 1 50 0;
+#X connect 88 0 87 0;
+#X connect 89 0 94 0;
+#X connect 90 0 89 0;
+#X connect 91 0 92 0;
+#X connect 92 0 94 0;
+#X connect 93 0 94 0;
+#X connect 94 0 58 0;
+#X connect 95 0 58 0;
+#X connect 96 0 93 0;
+#X connect 97 0 1 0;
+#X connect 97 0 0 0;
+#X connect 97 1 4 0;
